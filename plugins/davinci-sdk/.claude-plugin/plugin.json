@@ -1,0 +1,13 @@
+{
+  "name": "davinci-sdk",
+  "version": "0.1.0",
+  "description": "Reference for the Vocdoni Davinci SDK (@vocdoni/davinci-sdk): the high-level DavinciSDK facade for the zk-based voting protocol — create a process, cast encrypted (ElGamal + zk-SNARK) votes, build any census (Merkle/dynamic/CSP/on-chain), configure ballot modes, drive lifecycle, and read results. Includes per-topic references, protocol grounding, and copy-pasteable runnable recipes for the full create-process → encrypted-vote → results flow.",
+  "author": {
+    "name": "Vocdoni",
+    "url": "https://vocdoni.io"
+  },
+  "homepage": "https://github.com/vocdoni/skills",
+  "repository": "https://github.com/vocdoni/skills",
+  "license": "AGPL-3.0-or-later",
+  "keywords": ["claude-code", "skills", "vocdoni", "davinci", "voting", "zk", "blockchain"]
+}

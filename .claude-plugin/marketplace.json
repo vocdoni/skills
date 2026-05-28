@@ -25,6 +25,16 @@
       "tags": ["vocdoni", "voting", "elections", "sdk", "census3", "zk", "blockchain"],
       "license": "AGPL-3.0-or-later",
       "homepage": "https://github.com/vocdoni/skills"
+    },
+    {
+      "name": "davinci-sdk",
+      "source": "./plugins/davinci-sdk",
+      "description": "Reference for the Vocdoni Davinci SDK (@vocdoni/davinci-sdk): the high-level DavinciSDK facade for the zk-based voting protocol — create-process, encrypted (ElGamal + zk-SNARK) voting, every census type (Merkle/dynamic/CSP/on-chain), ballot-mode configuration, lifecycle, and results, with runnable recipes and protocol grounding.",
+      "version": "0.1.0",
+      "category": "sdk",
+      "tags": ["vocdoni", "davinci", "voting", "elections", "sdk", "zk", "homomorphic-encryption", "blockchain"],
+      "license": "AGPL-3.0-or-later",
+      "homepage": "https://github.com/vocdoni/skills"
     }
   ]
 }

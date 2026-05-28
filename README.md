@@ -7,6 +7,7 @@ Curated [Agent Skills][skills-docs] from [Vocdoni][vocdoni], packaged as a **Cla
 claude plugin marketplace add vocdoni/skills
 claude plugin install vocdoni-go@vocdoni
 claude plugin install vocdoni-sdk@vocdoni
+claude plugin install davinci-sdk@vocdoni
 
 # Or grab everything in one shot
 npx @vocdoni/skills install
@@ -31,6 +32,12 @@ npx @vocdoni/skills install
 | `vocdoni-sdk`              | Exhaustive [`@vocdoni/sdk`][sdk] reference — client, accounts, census, all election variants, anonymous (ZK), CSP, Census3 — plus runnable recipes. |
 | `vocdoni-ballot-protocol`  | The on-chain data model the SDK serialises into: ballot encoding, results matrix, parameter semantics. |
 
+### 🔐 `davinci-sdk` — Vocdoni Davinci (zk voting) SDK
+
+| Skill         | What it covers                                                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------------- |
+| `davinci-sdk` | The [`@vocdoni/davinci-sdk`][davinci-sdk] facade — create a process, cast encrypted (ElGamal + zk-SNARK) votes, every census type (Merkle/dynamic/CSP/on-chain), ballot-mode configuration, lifecycle, and results — plus protocol grounding and runnable recipes. |
+
 More plugins (`vocdoni-typescript`, `vocdoni-solidity`, …) will land under `plugins/` over time.
 
 ---
@@ -46,6 +53,7 @@ claude plugin marketplace add vocdoni/skills
 # Install all current plugins
 claude plugin install vocdoni-go@vocdoni
 claude plugin install vocdoni-sdk@vocdoni
+claude plugin install davinci-sdk@vocdoni
 ```
 
 Iterating locally? Point the marketplace at a checkout instead:
@@ -65,6 +73,7 @@ npx @vocdoni/skills install
 # A whole plugin (short form: 'go' → 'vocdoni-go', 'sdk' → 'vocdoni-sdk')
 npx @vocdoni/skills install --plugin go
 npx @vocdoni/skills install --plugin sdk
+npx @vocdoni/skills install --plugin davinci-sdk   # full name (no vocdoni- prefix)
 
 # A single skill, looked up across plugins
 npx @vocdoni/skills install go-modern
@@ -97,7 +106,9 @@ Skills are plain directories at `plugins/<plugin>/skills/<skill>/`.
 │   ├── vocdoni-go/
 │   │   ├── .claude-plugin/plugin.json
 │   │   └── skills/<skill>/SKILL.md
-│   └── vocdoni-sdk/
+│   ├── vocdoni-sdk/
+│   │   └── …
+│   └── davinci-sdk/
 │       └── …
 ├── bin/install.js                      # npx CLI (zero deps, Node ≥ 18)
 ├── package.json                        # Published as @vocdoni/skills
@@ -119,4 +130,5 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the skill format, naming rules, and
 [skills-docs]: https://docs.claude.com/en/docs/claude-code/skills
 [skills-api]: https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview
 [sdk]: https://github.com/vocdoni/vocdoni-sdk
+[davinci-sdk]: https://github.com/vocdoni/davinci-sdk
 [vocdoni]: https://vocdoni.io
