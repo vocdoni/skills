@@ -1,0 +1,24 @@
+{
+  "name": "vocdoni-sdk",
+  "version": "0.1.0",
+  "description": "Vocdoni SDK (@vocdoni/sdk) reference skill. Teaches an AI agent the full surface of the Vocdoni voting SDK — client setup, accounts, census types, election creation, all voting variants (approval/ranked/multichoice/quadratic/budget), anonymous (ZK) voting, CSP, and Census3 token-based censuses — with copy-pasteable code recipes.",
+  "author": {
+    "name": "Vocdoni",
+    "url": "https://vocdoni.io"
+  },
+  "homepage": "https://github.com/vocdoni/skills",
+  "repository": "https://github.com/vocdoni/skills",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "claude-code",
+    "skills",
+    "vocdoni",
+    "vocdoni-sdk",
+    "voting",
+    "elections",
+    "census",
+    "census3",
+    "anonymous-voting",
+    "zk"
+  ]
+}

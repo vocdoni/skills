@@ -1,0 +1,30 @@
+{
+  "name": "vocdoni",
+  "owner": {
+    "name": "Vocdoni",
+    "url": "https://vocdoni.io"
+  },
+  "description": "Vocdoni's curated skills marketplace for Claude Code. One plugin per language/topic.",
+  "plugins": [
+    {
+      "name": "vocdoni-go",
+      "source": "./plugins/vocdoni-go",
+      "description": "Go skills: Rob Pike's proverbs, production-grade quality checklist (with deep reference), and version-aware modern Go syntax.",
+      "version": "0.1.0",
+      "category": "engineering",
+      "tags": ["go", "golang", "best-practices", "code-quality"],
+      "license": "AGPL-3.0-or-later",
+      "homepage": "https://github.com/vocdoni/skills"
+    },
+    {
+      "name": "vocdoni-sdk",
+      "source": "./plugins/vocdoni-sdk",
+      "description": "Exhaustive reference for the Vocdoni SDK (@vocdoni/sdk): client setup, accounts, every census type, all election variants (approval/ranked/multichoice/budget/quadratic), anonymous (ZK) voting, CSP, and Census3, with copy-pasteable runnable recipes.",
+      "version": "0.1.0",
+      "category": "sdk",
+      "tags": ["vocdoni", "voting", "elections", "sdk", "census3", "zk", "blockchain"],
+      "license": "AGPL-3.0-or-later",
+      "homepage": "https://github.com/vocdoni/skills"
+    }
+  ]
+}

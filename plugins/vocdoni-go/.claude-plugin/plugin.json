@@ -1,0 +1,22 @@
+{
+  "name": "vocdoni-go",
+  "version": "0.1.0",
+  "description": "Vocdoni's Go skills: Rob Pike's proverbs, a production-grade quality checklist with a deep reference, and version-aware modern Go syntax.",
+  "author": {
+    "name": "Vocdoni",
+    "url": "https://vocdoni.io"
+  },
+  "homepage": "https://github.com/vocdoni/skills",
+  "repository": "https://github.com/vocdoni/skills",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "claude-code",
+    "skills",
+    "vocdoni",
+    "go",
+    "golang",
+    "best-practices",
+    "code-quality",
+    "go-proverbs"
+  ]
+}

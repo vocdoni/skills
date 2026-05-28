@@ -1,0 +1,42 @@
+{
+  "name": "@vocdoni/skills",
+  "version": "0.1.0",
+  "description": "Vocdoni's curated skills for AI coding assistants (Claude Code, Cursor, Cline, and other Anthropic-skill-compatible clients).",
+  "bin": {
+    "vocdoni-skills": "bin/install.js"
+  },
+  "files": [
+    "bin",
+    "plugins",
+    ".claude-plugin",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "lint": "node bin/install.js list"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "skills",
+    "anthropic",
+    "vocdoni",
+    "go",
+    "best-practices",
+    "ai",
+    "agent"
+  ],
+  "homepage": "https://github.com/vocdoni/skills#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vocdoni/skills.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vocdoni/skills/issues"
+  },
+  "author": "Vocdoni <info@vocdoni.io> (https://vocdoni.io)",
+  "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": ">=18"
+  }
+}
