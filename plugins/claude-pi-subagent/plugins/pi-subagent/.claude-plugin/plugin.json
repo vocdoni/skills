@@ -1,0 +1,71 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "pi-subagent",
+  "version": "0.2.0",
+  "description": "Delegate to named Pi subagents (.md persona + model + tools, incl. MCP) and bounded coding tasks from Claude Code. Bundles a local stdio MCP server that launches Pi (pi --mode rpc), isolates code edits in git worktrees, and returns compact summaries plus diff paths — never applying changes automatically.",
+  "author": {
+    "name": "Pau Escrich"
+  },
+  "homepage": "https://github.com/p4u/claude-pi-marketplace",
+  "license": "MIT",
+  "keywords": ["pi", "subagent", "mcp", "delegation", "worktree", "coding-agent", "rpc"],
+  "skills": ["./skills/pi-delegation"],
+  "agents": ["./agents/pi-delegator.md"],
+  "mcpServers": "./.mcp.json",
+  "userConfig": {
+    "pi_path": {
+      "title": "Pi executable path",
+      "type": "string",
+      "default": "pi",
+      "description": "Path to the Pi executable. Use an absolute path if `pi` is not on PATH for the MCP server process."
+    },
+    "default_provider": {
+      "title": "Default provider",
+      "type": "string",
+      "default": "",
+      "description": "Default Pi provider (e.g. anthropic, openai, google). Empty means use Pi's own configured default."
+    },
+    "default_model": {
+      "title": "Default model",
+      "type": "string",
+      "default": "",
+      "description": "Default Pi model pattern or id (supports 'provider/id' and ':<thinking>'). Empty means use Pi's configured default."
+    },
+    "default_thinking": {
+      "title": "Default thinking level",
+      "type": "string",
+      "default": "medium",
+      "description": "Default Pi thinking level: off, minimal, low, medium, high, or xhigh."
+    },
+    "max_parallel_tasks": {
+      "title": "Max parallel tasks",
+      "type": "number",
+      "default": 2,
+      "description": "Maximum number of Pi tasks allowed to run concurrently."
+    },
+    "default_timeout_seconds": {
+      "title": "Default timeout (seconds)",
+      "type": "number",
+      "default": 900,
+      "description": "Default wall-clock timeout for a single Pi task run, in seconds."
+    },
+    "use_worktrees_by_default": {
+      "title": "Use git worktrees by default",
+      "type": "boolean",
+      "default": true,
+      "description": "Isolate each task in a detached git worktree by default. Strongly recommended for patch/test modes."
+    },
+    "allow_apply_tool": {
+      "title": "Allow apply-result tool",
+      "type": "boolean",
+      "default": false,
+      "description": "Register the pi_apply_result tool, which can apply a task's diff into the project. Off by default for safety."
+    },
+    "agents_dir": {
+      "title": "Extra pi-agents directory",
+      "type": "string",
+      "default": "",
+      "description": "Optional extra directory of named pi-agent .md definitions. Always searched in addition to ~/.pi/agents, <project>/.pi/agents, and <project>/pi-agents (this override wins name collisions)."
+    }
+  }
+}

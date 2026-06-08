@@ -1,0 +1,8 @@
+node_modules/
+*.log
+.DS_Store
+
+# dist/ is intentionally committed so the plugin runs without `npm install`.
+# If an enclosing .gitignore excludes dist/, force-add it: `git add -f dist`
+!dist/
+!dist/**

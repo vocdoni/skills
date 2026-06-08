@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "pi-subagent": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/dist/server.mjs"],
+      "env": {
+        "PI_SUBAGENT_PLUGIN_ROOT": "${CLAUDE_PLUGIN_ROOT}",
+        "PI_SUBAGENT_DATA_DIR": "${CLAUDE_PLUGIN_DATA}",
+        "PI_SUBAGENT_PROJECT_DIR": "${CLAUDE_PROJECT_DIR}",
+        "PI_SUBAGENT_PI_PATH": "${user_config.pi_path}",
+        "PI_SUBAGENT_DEFAULT_PROVIDER": "${user_config.default_provider}",
+        "PI_SUBAGENT_DEFAULT_MODEL": "${user_config.default_model}",
+        "PI_SUBAGENT_DEFAULT_THINKING": "${user_config.default_thinking}",
+        "PI_SUBAGENT_MAX_PARALLEL": "${user_config.max_parallel_tasks}",
+        "PI_SUBAGENT_DEFAULT_TIMEOUT_SECONDS": "${user_config.default_timeout_seconds}",
+        "PI_SUBAGENT_USE_WORKTREES": "${user_config.use_worktrees_by_default}",
+        "PI_SUBAGENT_ALLOW_APPLY": "${user_config.allow_apply_tool}",
+        "PI_SUBAGENT_AGENTS_DIR": "${user_config.agents_dir}"
+      }
+    }
+  }
+}

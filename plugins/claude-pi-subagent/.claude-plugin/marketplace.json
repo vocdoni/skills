@@ -1,0 +1,18 @@
+{
+  "name": "pi-agent-tools",
+  "owner": {
+    "name": "Pau Escrich"
+  },
+  "description": "Tools for delegating bounded coding tasks from Claude Code to the Pi coding agent.",
+  "plugins": [
+    {
+      "name": "pi-subagent",
+      "source": "./plugins/pi-subagent",
+      "description": "Delegate to named Pi subagents (.md persona + model + tools, incl. MCP) and bounded coding tasks from Claude Code. Bundles a local stdio MCP server that launches Pi (pi --mode rpc), isolates code edits in git worktrees, and returns compact summaries plus diff paths — never applying changes automatically.",
+      "version": "0.2.0",
+      "category": "engineering",
+      "tags": ["pi", "subagent", "mcp", "delegation", "worktree", "coding-agent", "rpc", "agents"],
+      "license": "MIT"
+    }
+  ]
+}
