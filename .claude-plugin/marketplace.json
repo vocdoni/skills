@@ -35,6 +35,16 @@
       "tags": ["vocdoni", "davinci", "voting", "elections", "sdk", "zk", "homomorphic-encryption", "blockchain"],
       "license": "AGPL-3.0-or-later",
       "homepage": "https://github.com/vocdoni/skills"
+    },
+    {
+      "name": "pi-subagent",
+      "source": "./plugins/claude-pi-subagent/plugins/pi-subagent",
+      "description": "Delegate to named Pi subagents (.md persona + model + tools, incl. MCP) and bounded coding tasks from Claude Code. Bundles a local stdio MCP server that launches Pi (pi --mode rpc), isolates code edits in git worktrees, and returns compact summaries plus diff paths — never applying changes automatically.",
+      "version": "0.2.0",
+      "category": "engineering",
+      "tags": ["pi", "subagent", "mcp", "delegation", "worktree", "coding-agent", "agents"],
+      "license": "MIT",
+      "homepage": "https://github.com/vocdoni/skills"
     }
   ]
 }
