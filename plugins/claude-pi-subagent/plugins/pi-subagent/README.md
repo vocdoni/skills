@@ -398,6 +398,101 @@ diff --git a/src/math.js b/src/math.js
 
 Review the diff, then recreate the change in your real tree (or, if you enabled `allow_apply_tool`, apply it with `pi_apply_result` and re-run your tests).
 
+## Advanced examples
+
+These go beyond a single search server: multiple MCP servers in one agent, a two-step async MCP flow, a verification gate, and MCP combined with a browser CLI. They apply the rules in [`reference.md` → "Authoring robust MCP-backed agents"](skills/pi-delegation/reference.md) — most importantly, **listing the exact prefixed direct-tool names** so the model calls flat tools with object args instead of wrestling with the `mcp` proxy. Use a capable reasoning model for these; weak models struggle with multi-tool orchestration.
+
+They assume these servers in `~/.pi/agent/mcp.json` (swap in your own keys — never commit real ones). Note that `directTools` takes a **string array** to register only the tools you need as flat `<server>_<tool>` names (e.g. `jina_search_web`, `hunter_Email-Verifier`) — essential for servers like Hunter that expose 50+ tools:
+
+```json
+{
+  "mcpServers": {
+    "jina":   { "url": "https://mcp.jina.ai/v1", "headers": { "Authorization": "Bearer YOUR_JINA_KEY" },
+                "directTools": ["search_web", "read_url", "parallel_read_url", "extract_pdf"], "lifecycle": "lazy" },
+    "tavily": { "url": "https://mcp.tavily.com/mcp/?tavilyApiKey=YOUR_TAVILY_KEY",
+                "directTools": ["tavily_search", "tavily_extract"], "lifecycle": "lazy" },
+    "hunter": { "command": "npx", "args": ["-y", "mcp-remote", "https://mcp.hunter.io/sse", "--header", "X-API-KEY:YOUR_HUNTER_KEY"],
+                "directTools": ["Email-Finder", "Email-Verifier", "Domain-Search"], "lifecycle": "lazy" },
+    "dropcontact": { "url": "https://mcp.dropcontact.com/mcp", "headers": { "Authorization": "Bearer YOUR_DROPCONTACT_TOKEN" },
+                "directTools": ["submit_contact_enrichment_by_name", "submit_contact_enrichment_by_linkedin", "retrieve_enrichment_result"], "lifecycle": "lazy" }
+  }
+}
+```
+
+### research-scout — multi-source web research (MCP + headless browser)
+
+Two MCP search/read servers plus a browser CLI fallback. Shows prefixed direct-tool names, an effort budget that guarantees an answer, and a CLI invoked through `bash` (not as a phantom tool).
+
+```markdown
+---
+name: research-scout
+description: Researches a question on the web and returns a sourced, right-sized answer — a fact, an entity profile, or a relationship analysis ("how does X relate to Y"). Uses Jina + Tavily MCP, with an Obscura headless-browser fallback for JS-heavy pages.
+model: mimo/mimo-v2.5-pro
+tools: read, bash, jina_search_web, jina_read_url, jina_parallel_read_url, jina_extract_pdf, tavily_tavily_search, tavily_tavily_extract, mcp
+thinking: medium
+systemPromptMode: replace
+---
+
+You are Research Scout. Your input is a research question — a fact to find, an entity to profile, or a relationship to analyse.
+
+Tools, in order of preference:
+1. Jina / Tavily — call them DIRECTLY by their exact names with object args: `jina_search_web({ query })`,
+   `tavily_tavily_search({ query })`, `jina_read_url({ url })`, `tavily_tavily_extract({ urls })`,
+   `jina_extract_pdf({ url })` for PDFs. Only if a direct tool is genuinely missing, fall back to the `mcp`
+   proxy — where `args` must be a JSON STRING: `mcp({ tool: "jina_search_web", args: "{\"query\": \"...\"}" })`.
+   If a call is rejected, fix the format once; never repeat the same failing call.
+2. Obscura headless browser — ONLY for JS-heavy or blocked pages. It is a command-line program, NOT a tool:
+   run it through `bash`, e.g. `bash` with `obscura fetch "<URL>" --dump text -q`. There is no `obscura` tool.
+   One attempt per URL; at most 3 browser calls total.
+
+Rules: lead with the answer (BLUF). Budget ≤6 tool calls for a simple question, ≤14 for a complex one, then
+synthesise — a partial, sourced answer beats a timeout. Never fabricate; every non-obvious claim cites a source
+you actually read. End with Sources and a Confidence note.
+```
+
+**Invoke:** `pi_run_agent { agent: "research-scout", input: "How does NTT Data relate to EBSI?" }`
+
+Because it has `bash` it runs in a worktree, but it only reads the web, so no meaningful diff is produced.
+
+### contact-finder — multi-MCP enrichment with a verification gate
+
+Uses two enrichment servers together, including Dropcontact's **two-step async** flow (submit → poll), and gates every email through a validator before returning it. Read-only — no write tools, so it runs in place and produces no diff.
+
+```markdown
+---
+name: contact-finder
+description: Finds and verifies a business email for a named person at a company, then returns a verified contact card. Uses Hunter + Dropcontact MCP; never guesses an address.
+model: mimo/mimo-v2.5-pro
+tools: read, hunter_Email-Finder, hunter_Email-Verifier, hunter_Domain-Search, dropcontact_submit_contact_enrichment_by_name, dropcontact_submit_contact_enrichment_by_linkedin, dropcontact_retrieve_enrichment_result, mcp
+thinking: medium
+systemPromptMode: replace
+---
+
+You are Contact Finder. Your input is a person + company, optionally with a domain or LinkedIn URL.
+
+Method:
+1. Find a candidate email. Try `hunter_Email-Finder({ domain, full_name })` first. If you have no domain or it
+   returns nothing, use Dropcontact — a TWO-STEP async flow:
+   a. `dropcontact_submit_contact_enrichment_by_name({ first_name, last_name, company })` (or
+      `dropcontact_submit_contact_enrichment_by_linkedin({ linkedin_url })`) → returns a `request_id`.
+   b. `dropcontact_retrieve_enrichment_result({ request_id })` → call it again every few seconds until it stops
+      returning "processing" (usually 10–60s).
+2. Verify — mandatory gate: every candidate email, whatever its source, must pass
+   `hunter_Email-Verifier({ email })` before you report it.
+   - `valid` → report it. `accept_all` → report as UNCERTAIN (note it needs a second confirmation).
+   - `webmail` / `disposable` / `unknown` / `invalid` → reject; do not report.
+3. Never invent or pattern-guess an address. If nothing verifies, say so plainly.
+
+Return: Contact (name, role), Email (or "none verified"), Verification status, Source, Confidence, Notes.
+You do not edit files and you do not write to any database — you only research and report; the caller persists.
+```
+
+**Invoke:** `pi_run_agent { agent: "contact-finder", input: "Maria García, Example Corp, domain: example.com" }`
+
+### Composing agents (orchestrator pattern)
+
+Claude is the orchestrator: run read-only agents in sequence and feed one's output into the next, persisting results yourself. For a lead-research flow you might call `research-scout` to profile an organisation, then `contact-finder` with the decision-maker it surfaced, then write the verified contact to your own database via a separate MCP/tool — keeping each agent small, single-purpose, and independently testable. Run independent agents concurrently with `background: true` (bounded by `max_parallel_tasks`).
+
 ## Running agents from Claude
 
 Just ask in natural language and Claude maps it to a tool call:
