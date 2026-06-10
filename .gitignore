@@ -11,3 +11,6 @@ dist/
 .env
 .env.local
 
+
+# pi-subagent run artifacts (worktrees, diffs, logs, sessions)
+.claude/pi-runs/
