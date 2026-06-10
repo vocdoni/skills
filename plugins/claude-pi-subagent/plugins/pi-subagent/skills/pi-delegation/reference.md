@@ -121,6 +121,51 @@ in an `mcp.json` it auto-reads (`~/.pi/agent/mcp.json`, `<project>/.pi/mcp.json`
 - A generic **`mcp` proxy tool** is always available (no cache warming). List both direct names and `mcp`
   in an agent's `tools` so it works warm or cold; warm direct tools with `/mcp reconnect <server>`.
 
+## Authoring robust MCP-backed agents (hard-won gotchas)
+
+These are the failure modes that bite when an agent uses MCP tools or shells out — especially on weaker or
+local models. They cost real timeouts before they were understood.
+
+### 1. List the EXACT prefixed direct-tool names, not the bare ones
+The adapter registers a server's tools under a server-derived name (default `toolPrefix: "server"`), i.e.
+`<server>_<toolName>` — jina's `search_web` → **`jina_search_web`**, tavily's `tavily_search` →
+**`tavily_tavily_search`**, hunter's `Domain-Search` → **`hunter_Domain-Search`**. A tool is only registered
+flat if it is in that server's `directTools` array in `mcp.json` (a string[] selects specific tools — use it
+to avoid registering all 50+ tools of a big server). If an agent's `tools:` lists the **bare** name
+(`search_web`), it does not surface as a flat tool and the model is pushed onto the `mcp` proxy. Look up the
+per-server original names in `~/.pi/agent/mcp-cache.json`, then prefix them.
+
+### 2. The `mcp` proxy's `args` is a JSON STRING — weak models loop on it forever
+The proxy call shape is `mcp({ tool: "jina_search_web", args: "{\"query\":\"...\"}" })` — `args` is a
+**stringified** JSON object, not an object. A strong reasoning model gets this right; a small or non-reasoning
+model passes `args` as an object, gets `args: must be string`, and **retries the identical malformed call
+until the run times out** — producing nothing. **Mitigation: expose flat direct tools (gotcha 1) so the model
+never needs the proxy.** Keep `mcp` in the tool list only as a labelled last resort, and document the
+string-args rule in the persona. Exposing flat tools also speeds up strong models (no proxy round-trips).
+
+### 3. Give research personas an effort budget + an "always answer" rule
+Agents on slow/local models will research endlessly and hit the wall with **zero output** — the worst
+outcome. Put a hard rule in the persona: *"≤N tool calls, then synthesize; a partial, sourced answer beats a
+timeout; if blocked, stop and report what you found + the gaps."* This single rule turned a 15-minute
+no-output timeout into a fast, complete answer in testing.
+
+### 4. A CLI is NOT a tool — say so, and cap retries
+When a persona shells out to a binary (a browser, a scraper), models repeatedly emit a phantom tool call named
+after the binary (`obscura(...)`) instead of `bash("obscura ...")`, error, and thrash. Always state:
+*"X is a command-line program — run it through the `bash` tool; there is no `X` tool,"* plus an anti-thrash
+cap: *"one attempt per target, ≤N total, never repeat a failing call — switch approach."*
+
+### 5. Adding `bash` flips a read-only agent into worktree mode
+If you give a "read-only" research agent `bash` (e.g. to call a CLI), it becomes write-capable and runs in a
+detached git worktree — so it now needs a git repo and emits a (usually empty) diff. Expected, but surprising
+if you only wanted a CLI. Use `useWorktree: false` per call to force in-place if you truly want no isolation.
+
+### 6. The same persona is not free-portable across models
+Reasoning models handle agentic tool-calling (and the proxy) well; small non-reasoning MoEs do not. Treat the
+model as part of the agent's contract and re-test after any model swap. On a single-model host (e.g. a local
+vLLM), a model **id** in the request does not swap the loaded weights — verify what is actually served before
+trusting a comparison.
+
 ## TaskResult shape
 
 ```jsonc

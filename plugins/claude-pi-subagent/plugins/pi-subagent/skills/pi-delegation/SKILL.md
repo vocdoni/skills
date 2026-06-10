@@ -45,6 +45,10 @@ Default to a read-only mode; only use `patch`/`test` when Pi should modify files
 
 A result includes `status`, `summary`/`lastAssistantText`, `changedFiles`, `worktreePath`, `diffPath`, a truncated `diffPreview`, and artifact paths (`logPath`, `resultPath`, `sessionFile`). On `failed`/`timeout`, read `error` and the `logPath`.
 
+**Verify the agent actually used its tools — don't trust the prose.** For a research/MCP agent, check `pi_get_status` → `recentTools` (or the log) and confirm real tool calls happened. A confident answer with **zero tool calls is parametric hallucination**: a weak model may invent plausible-but-unread "sources" and even leak chat-template tokens. "It returned text" ≠ "it researched." A run that loops on the same erroring tool call, or times out with an empty `summary`, is a tool-format or budget problem in the agent — see `reference.md` → "Authoring robust MCP-backed agents."
+
+**The agent's model is part of its contract.** Reasoning models handle agentic tool-calling reliably; small non-reasoning models often can't (they loop on the MCP proxy and don't self-correct). If you override `model` or the host's model changed, re-verify behavior — the same persona is not free-portable across models.
+
 ## Never trust Pi's patch blindly
 
 For any agent or task that edits files:
