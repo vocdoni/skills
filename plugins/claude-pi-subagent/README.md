@@ -17,6 +17,10 @@ A small Claude Code **plugin marketplace** for delegating coding work to the
   [plugins/pi-subagent/README.md](./plugins/pi-subagent/README.md)** (setup, creating and
   configuring subagents, real examples, tool reference).
 
+  **→ Example agents:
+  [plugins/pi-subagent/agents/examples/](./plugins/pi-subagent/agents/examples/)** — ready-to-copy
+  Pi-agent personas (`web-scout`, `mail-finder`, `browser-scout`) to start from.
+
 ## Install
 
 From Claude Code:

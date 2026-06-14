@@ -261,6 +261,13 @@ Files ending in `.chain.md` are ignored. Subdirectories are searched recursively
 
 These are complete, working agents. Create them under `~/.pi/agents/`. They use a `mimo/*` model and the Exa MCP server from the [setup](#setup-in-detail); swap in your own model/server names.
 
+> **Bundled example agents:** ready-to-copy `.md` personas ship in
+> [`agents/examples/`](./agents/examples/) — `web-scout` (web research + lead card),
+> `mail-finder` (email discovery + DeBounce verification), and `browser-scout` (headless-browser
+> fetch). They contain **no secrets** (MCP credentials live in your own `~/.pi/agent/mcp.json`);
+> change the host-specific `model:` to one you have configured. See
+> [`agents/examples/README.md`](./agents/examples/README.md).
+
 ### web-scout — read-only web research
 
 ```markdown
@@ -642,7 +649,8 @@ pi-subagent/
     paths.ts / config.ts / schemas.ts / result-format.ts / safe-process.ts / types.ts
   dist/server.mjs              # bundled server (committed)
   skills/pi-delegation/        # SKILL.md + reference.md
-  agents/pi-delegator.md       # delegation agent
+  agents/pi-delegator.md       # delegation agent (this plugin's own Claude subagent)
+  agents/examples/             # ready-to-copy example Pi-agent personas (web-scout, mail-finder, browser-scout)
   test/                        # vitest suites
 ```
 
