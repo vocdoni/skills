@@ -111,6 +111,8 @@ interface ManagedTask {
   startedAtMs: number;
   maxDiffChars: number;
   completion?: Promise<void>;
+  /** Idle-reaper timer: terminates the Pi process after completedTtlSeconds of no follow-up. */
+  reapTimer?: ReturnType<typeof setTimeout>;
 }
 
 const TERMINAL: readonly TaskStatus[] = ["completed", "failed", "cancelled", "timeout"];
@@ -201,7 +203,11 @@ export class PiTaskManager {
       return buildTaskResult(task.record, maxDiffChars ?? task.maxDiffChars);
     }
 
-    // Idle → re-open a run on the same session.
+    // Idle → re-open a run on the same session. Cancel any pending idle reaper first.
+    if (task.reapTimer) {
+      clearTimeout(task.reapTimer);
+      task.reapTimer = undefined;
+    }
     this.assertCapacity();
     task.record.status = "running";
     delete task.record.error;
@@ -566,7 +572,30 @@ export class PiTaskManager {
     record.endedAt = new Date().toISOString();
     this.releaseRun(task);
     await this.writeResult(task);
-    // Keep the client alive for potential follow-up.
+    // Keep the client alive for a follow-up window, then reap it to bound memory.
+    this.scheduleReap(task);
+  }
+
+  /**
+   * Schedule termination of a completed task's Pi process after `completedTtlSeconds`
+   * of inactivity, so fire-and-forget batches don't accumulate idle ~150 MB processes.
+   * A follow-up clears the timer (see followUp). 0 disables reaping.
+   */
+  private scheduleReap(task: ManagedTask): void {
+    if (task.reapTimer) {
+      clearTimeout(task.reapTimer);
+      task.reapTimer = undefined;
+    }
+    const ttlMs = this.config.completedTtlSeconds * 1000;
+    if (ttlMs <= 0) return;
+    const timer = setTimeout(() => {
+      // Only reap if still idle in a terminal state and the process is still alive.
+      if (task.running || !task.client.isAlive()) return;
+      task.logStream.write(`\n# reaped idle Pi process after ${this.config.completedTtlSeconds}s\n`);
+      void task.client.stop().catch(() => undefined);
+    }, ttlMs);
+    if (typeof timer.unref === "function") timer.unref();
+    task.reapTimer = timer;
   }
 
   private async finalizeTimeout(task: ManagedTask, message: string): Promise<void> {

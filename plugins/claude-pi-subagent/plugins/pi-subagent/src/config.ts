@@ -19,6 +19,12 @@ export interface Config {
   defaultThinking: ThinkingLevel;
   maxParallel: number;
   defaultTimeoutSeconds: number;
+  /**
+   * Seconds to keep a completed task's Pi process alive for follow-up before the
+   * idle reaper terminates it (freeing ~150 MB/process). 0 disables reaping
+   * (process lives until cleanup/shutdown — the old behaviour). Default 180.
+   */
+  completedTtlSeconds: number;
   useWorktrees: boolean;
   allowApply: boolean;
   projectDir: string;
@@ -111,6 +117,11 @@ export function loadConfig(env: Env = process.env): Config {
       firstRaw(env, ["PI_SUBAGENT_DEFAULT_TIMEOUT_SECONDS", "CLAUDE_PLUGIN_OPTION_DEFAULT_TIMEOUT_SECONDS"]),
       900,
       1,
+    ),
+    completedTtlSeconds: asInt(
+      firstRaw(env, ["PI_SUBAGENT_COMPLETED_TTL_SECONDS", "CLAUDE_PLUGIN_OPTION_COMPLETED_TTL_SECONDS"]),
+      180,
+      0,
     ),
     useWorktrees: asBool(
       firstRaw(env, ["PI_SUBAGENT_USE_WORKTREES", "CLAUDE_PLUGIN_OPTION_USE_WORKTREES_BY_DEFAULT"]),

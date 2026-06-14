@@ -336,7 +336,10 @@ export class PiRpcClient {
       const timer = setTimeout(() => {
         this.pending.delete(id);
         reject(new Error(`Timed out waiting for response to '${command.type}'. ${this.stderrTail()}`));
-      }, this.options.commandTimeoutMs ?? 30000);
+        // 120s default: under a burst of concurrent spawns, a freshly-started
+        // `pi --mode rpc` can take well over 30s to ack its first `prompt`
+        // (Node + Pi startup + model-provider connect under CPU/IO contention).
+      }, this.options.commandTimeoutMs ?? 120000);
       this.pending.set(id, { resolve, reject, timer });
       child.stdin!.write(payload, (err) => {
         if (err) {

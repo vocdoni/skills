@@ -21123,6 +21123,11 @@ function loadConfig(env = process.env) {
       900,
       1
     ),
+    completedTtlSeconds: asInt(
+      firstRaw(env, ["PI_SUBAGENT_COMPLETED_TTL_SECONDS", "CLAUDE_PLUGIN_OPTION_COMPLETED_TTL_SECONDS"]),
+      180,
+      0
+    ),
     useWorktrees: asBool(
       firstRaw(env, ["PI_SUBAGENT_USE_WORKTREES", "CLAUDE_PLUGIN_OPTION_USE_WORKTREES_BY_DEFAULT"]),
       true
@@ -21611,7 +21616,7 @@ var PiRpcClient = class {
       const timer = setTimeout(() => {
         this.pending.delete(id);
         reject(new Error(`Timed out waiting for response to '${command.type}'. ${this.stderrTail()}`));
-      }, this.options.commandTimeoutMs ?? 3e4);
+      }, this.options.commandTimeoutMs ?? 12e4);
       this.pending.set(id, { resolve, reject, timer });
       child.stdin.write(payload, (err) => {
         if (err) {
@@ -21927,6 +21932,10 @@ var PiTaskManager = class {
     if (task.record.status === "running") {
       await task.client.followUp(message);
       return buildTaskResult(task.record, maxDiffChars ?? task.maxDiffChars);
+    }
+    if (task.reapTimer) {
+      clearTimeout(task.reapTimer);
+      task.reapTimer = void 0;
     }
     this.assertCapacity();
     task.record.status = "running";
@@ -22255,6 +22264,29 @@ var PiTaskManager = class {
     record2.endedAt = (/* @__PURE__ */ new Date()).toISOString();
     this.releaseRun(task);
     await this.writeResult(task);
+    this.scheduleReap(task);
+  }
+  /**
+   * Schedule termination of a completed task's Pi process after `completedTtlSeconds`
+   * of inactivity, so fire-and-forget batches don't accumulate idle ~150 MB processes.
+   * A follow-up clears the timer (see followUp). 0 disables reaping.
+   */
+  scheduleReap(task) {
+    if (task.reapTimer) {
+      clearTimeout(task.reapTimer);
+      task.reapTimer = void 0;
+    }
+    const ttlMs = this.config.completedTtlSeconds * 1e3;
+    if (ttlMs <= 0) return;
+    const timer = setTimeout(() => {
+      if (task.running || !task.client.isAlive()) return;
+      task.logStream.write(`
+# reaped idle Pi process after ${this.config.completedTtlSeconds}s
+`);
+      void task.client.stop().catch(() => void 0);
+    }, ttlMs);
+    if (typeof timer.unref === "function") timer.unref();
+    task.reapTimer = timer;
   }
   async finalizeTimeout(task, message) {
     const { client, record: record2 } = task;
