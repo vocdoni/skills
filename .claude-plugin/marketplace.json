@@ -37,6 +37,16 @@
       "homepage": "https://github.com/vocdoni/skills"
     },
     {
+      "name": "vocdoni-integrator-sdk",
+      "source": "./plugins/vocdoni-integrator-sdk",
+      "description": "Reference for the Vocdoni Integrator SDK — the SaaS-first toolkit that replaces @vocdoni/sdk with small packages: @vocdoni/api-client (typed SaaS HTTP client), @vocdoni/api-voting (CSP auth, vote envelopes, ballot encryption, tx signing), @vocdoni/api-voting-zk (anonymous voting), and headless @vocdoni/react-providers / @vocdoni/react-components. Covers the bundle auth → check → sign → build-tx → relay/job vote flow, encrypted ballots, and React integration, with runnable recipes.",
+      "version": "0.1.0",
+      "category": "sdk",
+      "tags": ["vocdoni", "integrator-sdk", "voting", "elections", "csp", "react", "saas-api", "sdk"],
+      "license": "AGPL-3.0-or-later",
+      "homepage": "https://github.com/vocdoni/skills"
+    },
+    {
       "name": "pi-subagent",
       "source": "./plugins/claude-pi-subagent/plugins/pi-subagent",
       "description": "Delegate to named Pi subagents (.md persona + model + tools, incl. MCP) and bounded coding tasks from Claude Code. Bundles a local stdio MCP server that launches Pi (pi --mode rpc), isolates code edits in git worktrees, and returns compact summaries plus diff paths — never applying changes automatically.",

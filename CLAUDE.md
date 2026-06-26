@@ -18,7 +18,7 @@ A **skill** is one directory whose name must match `name:` in its `SKILL.md` fro
 
 Adding a plugin requires **two** edits that must stay in sync: create `plugins/<name>/.claude-plugin/plugin.json` AND register the same entry in `.claude-plugin/marketplace.json` (matching `name`, `version`, `description`). `bin/install.js` discovers plugins only via `plugins/<name>/.claude-plugin/plugin.json`; Claude Code's marketplace reads `marketplace.json`. A plugin missing from one is invisible to that consumer.
 
-Consequence: `bin/install.js list` shows **3** plugins (the Markdown skill plugins), not 4. `pi-subagent` lives at `plugins/claude-pi-subagent/` with no `plugin.json` at that level — its real plugin is one directory deeper — so the npx CLI cannot see it. This is intentional: `pi-subagent` is Claude Code-only (it needs Pi and an MCP server) and is reachable only through the root `marketplace.json` entry, never via `npx @vocdoni/skills`.
+Consequence: `bin/install.js list` shows the Markdown skill plugins only (currently `vocdoni-go`, `vocdoni-sdk`, `davinci-sdk`, `vocdoni-integrator-sdk`), not `pi-subagent`. `pi-subagent` lives at `plugins/claude-pi-subagent/` with no `plugin.json` at that level — its real plugin is one directory deeper — so the npx CLI cannot see it. This is intentional: `pi-subagent` is Claude Code-only (it needs Pi and an MCP server) and is reachable only through the root `marketplace.json` entry, never via `npx @vocdoni/skills`.
 
 ## The installer (`bin/install.js`)
 

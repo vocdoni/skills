@@ -1,0 +1,23 @@
+{
+  "name": "vocdoni-integrator-sdk",
+  "version": "0.1.0",
+  "description": "Vocdoni Integrator SDK reference skill. Teaches an AI agent the SaaS-first toolkit that replaces @vocdoni/sdk — @vocdoni/api-client, @vocdoni/api-voting, @vocdoni/api-voting-zk, @vocdoni/react-providers, @vocdoni/react-components — covering the bundle/CSP auth → check → sign → vote-tx → relay/job flow, encrypted ballots, and React providers, with copy-pasteable recipes.",
+  "author": {
+    "name": "Vocdoni",
+    "url": "https://vocdoni.io"
+  },
+  "homepage": "https://github.com/vocdoni/skills",
+  "repository": "https://github.com/vocdoni/skills",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "claude-code",
+    "skills",
+    "vocdoni",
+    "integrator-sdk",
+    "voting",
+    "elections",
+    "csp",
+    "react",
+    "saas-api"
+  ]
+}
