@@ -11,6 +11,11 @@
  *   plugins/<plugin-name>/.claude-plugin/plugin.json
  *   plugins/<plugin-name>/skills/<skill-name>/SKILL.md
  *
+ * Remote plugins: a marketplace entry whose source starts with https:// or
+ * git@ is cloned/pulled on demand into ~/.cache/vocdoni-skills/<name>/ and
+ * then treated exactly like a local plugin. The remote repo must have a
+ * .claude-plugin/plugin.json with a "skills" array declaring where skills live.
+ *
  * Default destination is ~/.claude/skills, which Claude Code reads at
  * user scope. Override with --dest for other clients (e.g. Cursor, Cline)
  * or for per-project installation. Use --plugin to scope an install to
@@ -22,10 +27,13 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { spawnSync } = require('child_process');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 const PLUGINS_DIR = path.join(REPO_ROOT, 'plugins');
+const MARKETPLACE_FILE = path.join(REPO_ROOT, '.claude-plugin', 'marketplace.json');
 const DEFAULT_DEST = path.join(os.homedir(), '.claude', 'skills');
+const CACHE_DIR = path.join(os.homedir(), '.cache', 'vocdoni-skills');
 
 function usage() {
   const exe = 'vocdoni-skills';
@@ -46,6 +54,7 @@ Options:
                       authoring; updates in the repo are picked up live.
   --force             Overwrite existing skill directories at the target.
   --dry-run           Print what would happen, but make no changes.
+  --offline           Skip fetching remote plugins; use cached clones only.
 
 Examples:
   ${exe} list
@@ -66,6 +75,7 @@ function parseArgs(argv) {
     symlink: false,
     force: false,
     dryRun: false,
+    offline: false,
     help: false,
   };
 
@@ -78,6 +88,7 @@ function parseArgs(argv) {
     else if (a === '--symlink') opts.symlink = true;
     else if (a === '--force') opts.force = true;
     else if (a === '--dry-run') opts.dryRun = true;
+    else if (a === '--offline') opts.offline = true;
     else if (!opts.command) opts.command = a;
     else opts.skills.push(a);
     i++;
@@ -89,37 +100,6 @@ function parseArgs(argv) {
 
 function readJSON(p) {
   try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (_) { return null; }
-}
-
-function discoverPlugins() {
-  // Returns: [{ name, dir, skills: [{ name, dir, description }] }, ...]
-  if (!fs.existsSync(PLUGINS_DIR)) return [];
-  const out = [];
-  for (const entry of fs.readdirSync(PLUGINS_DIR, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    const pluginDir = path.join(PLUGINS_DIR, entry.name);
-    const manifest = readJSON(path.join(pluginDir, '.claude-plugin', 'plugin.json'));
-    if (!manifest || !manifest.name) continue;
-
-    const skillsDir = path.join(pluginDir, 'skills');
-    const skills = [];
-    if (fs.existsSync(skillsDir)) {
-      for (const s of fs.readdirSync(skillsDir, { withFileTypes: true })) {
-        if (!s.isDirectory()) continue;
-        const skillPath = path.join(skillsDir, s.name);
-        if (!fs.existsSync(path.join(skillPath, 'SKILL.md'))) continue;
-        skills.push({
-          name: s.name,
-          dir: skillPath,
-          description: readSkillDescription(skillPath),
-        });
-      }
-    }
-    skills.sort((a, b) => a.name.localeCompare(b.name));
-    out.push({ name: manifest.name, dir: pluginDir, skills });
-  }
-  out.sort((a, b) => a.name.localeCompare(b.name));
-  return out;
 }
 
 function readSkillDescription(skillDir) {
@@ -135,12 +115,108 @@ function readSkillDescription(skillDir) {
   return '';
 }
 
+// Resolve skills from a plugin.json manifest + its root directory.
+// If manifest.skills is an array, use those paths; otherwise scan skills/ subdir.
+function skillsFromManifest(manifest, rootDir) {
+  const skills = [];
+  if (Array.isArray(manifest.skills)) {
+    for (const s of manifest.skills) {
+      const skillPath = path.join(rootDir, s.path);
+      if (!fs.existsSync(path.join(skillPath, 'SKILL.md'))) continue;
+      skills.push({ name: s.name, dir: skillPath, description: readSkillDescription(skillPath) });
+    }
+  } else {
+    const skillsDir = path.join(rootDir, 'skills');
+    if (fs.existsSync(skillsDir)) {
+      for (const s of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+        if (!s.isDirectory()) continue;
+        const skillPath = path.join(skillsDir, s.name);
+        if (!fs.existsSync(path.join(skillPath, 'SKILL.md'))) continue;
+        skills.push({ name: s.name, dir: skillPath, description: readSkillDescription(skillPath) });
+      }
+    }
+  }
+  skills.sort((a, b) => a.name.localeCompare(b.name));
+  return skills;
+}
+
+function isRemoteSource(source) {
+  return typeof source === 'string' && (source.startsWith('https://') || source.startsWith('git@'));
+}
+
+// Clone or update a remote repo into the cache. Returns the local path.
+function cloneOrPullRepo(name, url) {
+  const dest = path.join(CACHE_DIR, name);
+  if (fs.existsSync(path.join(dest, '.git'))) {
+    const r = spawnSync('git', ['-C', dest, 'pull', '--quiet', '--ff-only'], { encoding: 'utf8' });
+    if (r.status !== 0) throw new Error(`git pull failed for ${name}: ${r.stderr || r.stdout}`);
+  } else {
+    fs.mkdirSync(dest, { recursive: true });
+    const r = spawnSync('git', ['clone', '--depth', '1', '--quiet', url, dest], { encoding: 'utf8' });
+    if (r.status !== 0) throw new Error(`git clone failed for ${name}: ${r.stderr || r.stdout}`);
+  }
+  return dest;
+}
+
+// Fetch a remote plugin entry, returning a plugin object or null on failure.
+function fetchRemotePlugin(entry, offline) {
+  const { name, source } = entry;
+  let localPath;
+  const cached = path.join(CACHE_DIR, name);
+
+  if (offline) {
+    if (!fs.existsSync(path.join(cached, '.git'))) return null;
+    localPath = cached;
+  } else {
+    localPath = cloneOrPullRepo(name, source);
+  }
+
+  const manifest = readJSON(path.join(localPath, '.claude-plugin', 'plugin.json'));
+  if (!manifest) return null;
+
+  const skills = skillsFromManifest(manifest, localPath);
+  return { name, dir: localPath, skills, remote: source };
+}
+
+function discoverPlugins(offline) {
+  const out = [];
+
+  // Local plugins from plugins/ directory
+  if (fs.existsSync(PLUGINS_DIR)) {
+    for (const entry of fs.readdirSync(PLUGINS_DIR, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const pluginDir = path.join(PLUGINS_DIR, entry.name);
+      const manifest = readJSON(path.join(pluginDir, '.claude-plugin', 'plugin.json'));
+      if (!manifest || !manifest.name) continue;
+      const skills = skillsFromManifest(manifest, pluginDir);
+      out.push({ name: manifest.name, dir: pluginDir, skills });
+    }
+  }
+
+  // Remote plugins from marketplace.json
+  const marketplace = readJSON(MARKETPLACE_FILE);
+  if (marketplace && Array.isArray(marketplace.plugins)) {
+    for (const entry of marketplace.plugins) {
+      if (!isRemoteSource(entry.source)) continue;
+      if (out.find((p) => p.name === entry.name)) continue; // already local
+      try {
+        const plugin = fetchRemotePlugin(entry, offline);
+        if (plugin) out.push(plugin);
+      } catch (err) {
+        process.stderr.write(`Warning: could not fetch remote plugin ${entry.name}: ${err.message}\n`);
+        if (!offline) process.stderr.write('  (run with --offline to use cached version)\n');
+      }
+    }
+  }
+
+  out.sort((a, b) => a.name.localeCompare(b.name));
+  return out;
+}
+
 function resolvePluginName(short, plugins) {
   if (!short) return null;
-  // Exact match wins.
   const exact = plugins.find((p) => p.name === short);
   if (exact) return exact;
-  // Short form: 'go' -> 'vocdoni-go'
   const prefixed = plugins.find((p) => p.name === `vocdoni-${short}`);
   if (prefixed) return prefixed;
   return null;
@@ -148,12 +224,13 @@ function resolvePluginName(short, plugins) {
 
 function cmdList(plugins) {
   if (plugins.length === 0) {
-    process.stdout.write('No plugins found under plugins/.\n');
+    process.stdout.write('No plugins found.\n');
     return 0;
   }
   process.stdout.write(`@vocdoni/skills — ${plugins.length} plugin(s):\n\n`);
   for (const p of plugins) {
-    process.stdout.write(`▸ ${p.name}  (${p.skills.length} skill${p.skills.length === 1 ? '' : 's'})\n`);
+    const remoteBadge = p.remote ? `  [remote: ${p.remote}]` : '';
+    process.stdout.write(`▸ ${p.name}  (${p.skills.length} skill${p.skills.length === 1 ? '' : 's'})${remoteBadge}\n`);
     for (const s of p.skills) {
       const d = s.description || '';
       const truncated = d.length > 110 ? d.slice(0, 110) + '…' : d;
@@ -199,7 +276,6 @@ function cmdInstall(opts, plugins) {
     return 1;
   }
 
-  // Build the pool of candidate skills, filtered by --plugin if given.
   let pool;
   if (opts.plugin) {
     const p = resolvePluginName(opts.plugin, plugins);
@@ -214,7 +290,6 @@ function cmdInstall(opts, plugins) {
     for (const p of plugins) for (const s of p.skills) pool.push({ ...s, plugin: p.name });
   }
 
-  // Pick the skills to install.
   let chosen;
   if (opts.skills.length > 0) {
     chosen = [];
@@ -304,7 +379,7 @@ function main(argv) {
     usage();
     return 0;
   }
-  const plugins = discoverPlugins();
+  const plugins = discoverPlugins(opts.offline);
   switch (opts.command) {
     case 'list': return cmdList(plugins);
     case 'install': return cmdInstall(opts, plugins);
