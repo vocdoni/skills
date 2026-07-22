@@ -5,9 +5,14 @@ Curated [Agent Skills][skills-docs] from [Vocdoni][vocdoni], packaged as a **Cla
 ```sh
 # Claude Code — add the marketplace, then install what you want
 claude plugin marketplace add vocdoni/skills
-claude plugin install vocdoni-go@vocdoni
+
+# Building on Vocdoni? These are for you:
 claude plugin install vocdoni-sdk@vocdoni
 claude plugin install davinci-sdk@vocdoni
+claude plugin install vocdoni-integrator-sdk@vocdoni
+
+# Internal tooling we use at Vocdoni:
+claude plugin install vocdoni-go@vocdoni
 claude plugin install pi-subagent@vocdoni   # MCP server + agents — needs Pi (see its README)
 
 # Or grab everything in one shot (skill plugins only; pi-subagent is Claude Code-only)
@@ -16,15 +21,9 @@ npx @vocdoni/skills install
 
 ---
 
-## Plugins
+## Skills for integrators
 
-### 🐹 `vocdoni-go` — Go engineering
-
-| Skill                | What it covers                                                            |
-| -------------------- | ------------------------------------------------------------------------- |
-| `go-best-practices`  | Rob Pike's *Go Proverbs* — idiomatic & architectural defaults.            |
-| `go-code-quality`    | Production checklist: domain types, error contracts, context, goroutines. |
-| `go-modern`          | Version-aware modern Go syntax. Reads `go.mod` to pick the right target.  |
+SDK references for anyone building voting on Vocdoni — clients, partners, and third-party developers.
 
 ### 🗳️ `vocdoni-sdk` — Vocdoni voting SDK
 
@@ -38,6 +37,28 @@ npx @vocdoni/skills install
 | Skill         | What it covers                                                                                          |
 | ------------- | ------------------------------------------------------------------------------------------------------- |
 | `davinci-sdk` | The [`@vocdoni/davinci-sdk`][davinci-sdk] facade — create a process, cast encrypted (ElGamal + zk-SNARK) votes, every census type (Merkle/dynamic/CSP/on-chain), ballot-mode configuration, lifecycle, and results — plus protocol grounding and runnable recipes. |
+
+### 🧩 `vocdoni-integrator-sdk` — Vocdoni Integrator SDK
+
+| Skill            | What it covers                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------- |
+| `integrator-sdk` | The [Integrator SDK][integrator-sdk] packages — `@vocdoni/api-client`, `@vocdoni/api-voting`, `@vocdoni/react-providers`, `@vocdoni/react-components`: CSP auth flow, vote relay, ballot building, and React integration, with runnable recipes. |
+
+This is a **remote plugin**: the skill lives in the [integrator-sdk repo][integrator-sdk] and is cloned (or pulled) on demand by the npx CLI — pass `--offline` to skip fetching and use the cached clone.
+
+---
+
+## Skills for the Vocdoni team
+
+Tooling we use internally for our own development workflow. Nothing stops you from installing these, but they target how *we* work rather than the Vocdoni platform.
+
+### 🐹 `vocdoni-go` — Go engineering
+
+| Skill                | What it covers                                                            |
+| -------------------- | ------------------------------------------------------------------------- |
+| `go-best-practices`  | Rob Pike's *Go Proverbs* — idiomatic & architectural defaults.            |
+| `go-code-quality`    | Production checklist: domain types, error contracts, context, goroutines. |
+| `go-modern`          | Version-aware modern Go syntax. Reads `go.mod` to pick the right target.  |
 
 ### 🤖 `pi-subagent` — delegate to Pi subagents
 
@@ -65,9 +86,10 @@ More plugins (`vocdoni-typescript`, `vocdoni-solidity`, …) will land under `pl
 claude plugin marketplace add vocdoni/skills
 
 # Install all current plugins
-claude plugin install vocdoni-go@vocdoni
 claude plugin install vocdoni-sdk@vocdoni
 claude plugin install davinci-sdk@vocdoni
+claude plugin install vocdoni-integrator-sdk@vocdoni
+claude plugin install vocdoni-go@vocdoni
 claude plugin install pi-subagent@vocdoni   # see plugins/claude-pi-subagent/plugins/pi-subagent/README.md
 ```
 
@@ -88,7 +110,8 @@ npx @vocdoni/skills install
 # A whole plugin (short form: 'go' → 'vocdoni-go', 'sdk' → 'vocdoni-sdk')
 npx @vocdoni/skills install --plugin go
 npx @vocdoni/skills install --plugin sdk
-npx @vocdoni/skills install --plugin davinci-sdk   # full name (no vocdoni- prefix)
+npx @vocdoni/skills install --plugin integrator-sdk   # remote plugin, cloned on demand
+npx @vocdoni/skills install --plugin davinci-sdk      # full name (no vocdoni- prefix)
 
 # A single skill, looked up across plugins
 npx @vocdoni/skills install go-modern
@@ -134,6 +157,8 @@ Skills are plain directories at `plugins/<plugin>/skills/<skill>/`.
 └── LICENSE                             # AGPL-3.0-or-later
 ```
 
+`vocdoni-integrator-sdk` has no directory here — it is a remote plugin whose `source` in `marketplace.json` points at [vocdoni/integrator-sdk][integrator-sdk].
+
 ---
 
 ## Contributing
@@ -148,5 +173,6 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the skill format, naming rules, and
 [skills-api]: https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview
 [sdk]: https://github.com/vocdoni/vocdoni-sdk
 [davinci-sdk]: https://github.com/vocdoni/davinci-sdk
+[integrator-sdk]: https://github.com/vocdoni/integrator-sdk
 [vocdoni]: https://vocdoni.io
 [pi]: https://www.npmjs.com/package/@earendil-works/pi-coding-agent
