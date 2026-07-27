@@ -11,10 +11,13 @@
  *   plugins/<plugin-name>/.claude-plugin/plugin.json
  *   plugins/<plugin-name>/skills/<skill-name>/SKILL.md
  *
- * Remote plugins: a marketplace entry whose source starts with https:// or
- * git@ is cloned/pulled on demand into ~/.cache/vocdoni-skills/<name>/ and
- * then treated exactly like a local plugin. The remote repo must have a
+ * Remote plugins: a marketplace entry whose source is a git source object
+ * ({"source":"github","repo":"owner/repo"} or {"source":"url","url":"…"}) is
+ * cloned/pulled on demand into ~/.cache/vocdoni-skills/<name>/ and then treated
+ * exactly like a local plugin. The remote repo must have a
  * .claude-plugin/plugin.json with a "skills" array declaring where skills live.
+ * Use the object form, not a bare URL string: Claude Code's marketplace parser
+ * only accepts the object form and rejects the entry outright otherwise.
  *
  * Default destination is ~/.claude/skills, which Claude Code reads at
  * user scope. Override with --dest for other clients (e.g. Cursor, Cline)
@@ -140,19 +143,65 @@ function skillsFromManifest(manifest, rootDir) {
   return skills;
 }
 
+// Normalise a marketplace `source` into { url, ref, subdir } for git sources,
+// or null for local paths. Mirrors the source types Claude Code accepts, so one
+// marketplace.json entry serves both consumers:
+//
+//   { "source": "github",     "repo": "owner/repo", "ref"?, "sha"? }
+//   { "source": "url",        "url": "https://…",   "ref"?, "sha"? }
+//   { "source": "git-subdir", "url": "https://…", "path": "sub/dir", "ref"? }
+//
+// A bare "https://…"/"git@…" string still works here for backwards
+// compatibility, but Claude Code rejects it outright — always use the object
+// form in marketplace.json.
+function resolveRemoteSource(source) {
+  if (typeof source === 'string') {
+    if (source.startsWith('https://') || source.startsWith('git@')) {
+      return { url: source, ref: null, subdir: null };
+    }
+    return null; // local relative path
+  }
+  if (!source || typeof source !== 'object') return null;
+
+  const ref = source.sha || source.ref || null;
+  switch (source.source) {
+    case 'github':
+      if (!source.repo) return null;
+      return { url: `https://github.com/${source.repo}.git`, ref, subdir: null };
+    case 'url':
+    case 'git':
+      if (!source.url) return null;
+      return { url: source.url, ref, subdir: null };
+    case 'git-subdir':
+      if (!source.url) return null;
+      return { url: source.url, ref, subdir: source.path || null };
+    default:
+      return null;
+  }
+}
+
 function isRemoteSource(source) {
-  return typeof source === 'string' && (source.startsWith('https://') || source.startsWith('git@'));
+  return resolveRemoteSource(source) !== null;
 }
 
 // Clone or update a remote repo into the cache. Returns the local path.
-function cloneOrPullRepo(name, url) {
+// A pinned ref/sha is checked out after fetching; unpinned clones track the
+// default branch and are fast-forwarded on later runs.
+function cloneOrPullRepo(name, url, ref) {
   const dest = path.join(CACHE_DIR, name);
   if (fs.existsSync(path.join(dest, '.git'))) {
-    const r = spawnSync('git', ['-C', dest, 'pull', '--quiet', '--ff-only'], { encoding: 'utf8' });
-    if (r.status !== 0) throw new Error(`git pull failed for ${name}: ${r.stderr || r.stdout}`);
+    const fetchArgs = ['-C', dest, 'fetch', '--quiet', '--depth', '1', 'origin'];
+    if (ref) fetchArgs.push(ref);
+    const r = spawnSync('git', fetchArgs, { encoding: 'utf8' });
+    if (r.status !== 0) throw new Error(`git fetch failed for ${name}: ${r.stderr || r.stdout}`);
+    const up = spawnSync('git', ['-C', dest, ref ? 'checkout' : 'merge', '--quiet', ...(ref ? [] : ['--ff-only']), 'FETCH_HEAD'], { encoding: 'utf8' });
+    if (up.status !== 0) throw new Error(`git update failed for ${name}: ${up.stderr || up.stdout}`);
   } else {
     fs.mkdirSync(dest, { recursive: true });
-    const r = spawnSync('git', ['clone', '--depth', '1', '--quiet', url, dest], { encoding: 'utf8' });
+    const args = ['clone', '--depth', '1', '--quiet'];
+    if (ref) args.push('--branch', ref);
+    args.push(url, dest);
+    const r = spawnSync('git', args, { encoding: 'utf8' });
     if (r.status !== 0) throw new Error(`git clone failed for ${name}: ${r.stderr || r.stdout}`);
   }
   return dest;
@@ -161,21 +210,25 @@ function cloneOrPullRepo(name, url) {
 // Fetch a remote plugin entry, returning a plugin object or null on failure.
 function fetchRemotePlugin(entry, offline) {
   const { name, source } = entry;
-  let localPath;
+  const resolved = resolveRemoteSource(source);
+  if (!resolved) return null;
+
+  let repoPath;
   const cached = path.join(CACHE_DIR, name);
 
   if (offline) {
     if (!fs.existsSync(path.join(cached, '.git'))) return null;
-    localPath = cached;
+    repoPath = cached;
   } else {
-    localPath = cloneOrPullRepo(name, source);
+    repoPath = cloneOrPullRepo(name, resolved.url, resolved.ref);
   }
 
+  const localPath = resolved.subdir ? path.join(repoPath, resolved.subdir) : repoPath;
   const manifest = readJSON(path.join(localPath, '.claude-plugin', 'plugin.json'));
   if (!manifest) return null;
 
   const skills = skillsFromManifest(manifest, localPath);
-  return { name, dir: localPath, skills, remote: source };
+  return { name, dir: localPath, skills, remote: resolved.url };
 }
 
 function discoverPlugins(offline) {

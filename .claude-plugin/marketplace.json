@@ -38,7 +38,10 @@
     },
     {
       "name": "vocdoni-integrator-sdk",
-      "source": "https://github.com/vocdoni/integrator-sdk",
+      "source": {
+        "source": "github",
+        "repo": "vocdoni/integrator-sdk"
+      },
       "description": "Reference skill for the Vocdoni Integrator SDK (@vocdoni/api-client, @vocdoni/api-voting, @vocdoni/react-providers, @vocdoni/react-components): CSP auth flow, vote relay, ballot building, and React integration, with runnable recipes.",
       "version": "0.1.0",
       "category": "sdk",
