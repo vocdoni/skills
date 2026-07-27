@@ -20,7 +20,14 @@ Adding a plugin requires **two** edits that must stay in sync: create `plugins/<
 
 The two `description` fields deliberately differ and are **not** kept in sync: `marketplace.json` carries a short listing blurb, `plugin.json` a fuller one. Don't "fix" the divergence. Neither field affects skill auto-loading — only `SKILL.md` frontmatter does that.
 
-A plugin's skills are resolved two ways (`skillsFromManifest` in `bin/install.js`): if `plugin.json` has a `skills: [{name, path}]` array those paths win; otherwise every directory under `skills/` containing a `SKILL.md` is picked up. The local Vocdoni plugins use the implicit scan; remote plugins are expected to declare the array.
+**Prefer omitting `skills` from `plugin.json` entirely.** `skills/` is the default discovery location for both consumers, so a plugin that puts each skill at `skills/<name>/SKILL.md` needs no manifest field — which is what every plugin here does. If you must declare paths, Claude Code accepts only a string or an array of strings:
+
+```json
+"skills": ["./skills/integrator-sdk"]      // valid
+"skills": [{"name": "…", "path": "…"}]     // rejected: "skills: Invalid input"
+```
+
+The object form fails the **whole plugin**, not just that entry. `skillsFromManifest` in `bin/install.js` accepts strings, the legacy object form, a bare string path, an implicit `skills/` scan, and a single root-level `SKILL.md`; declared paths that escape the plugin root are ignored. That tolerance is deliberate — it means a manifest written for either consumer resolves here — but it also means **this installer cannot tell you when a manifest is invalid for Claude Code.** `vocdoni-integrator-sdk` shipped the object form and `npx vocdoni-skills list` resolved it happily while `/plugin install` rejected the plugin outright. When authoring a manifest, the npx CLI is not the authority; the Claude Code schema is.
 
 ### Remote plugins
 

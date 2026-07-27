@@ -105,40 +105,90 @@ function readJSON(p) {
   try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (_) { return null; }
 }
 
-function readSkillDescription(skillDir) {
+// Read `name` and `description` out of a SKILL.md frontmatter block.
+function readSkillMeta(skillDir) {
+  const meta = { name: '', description: '' };
   try {
     const src = fs.readFileSync(path.join(skillDir, 'SKILL.md'), 'utf8');
     const m = src.match(/^---\s*\n([\s\S]*?)\n---/);
-    if (!m) return '';
+    if (!m) return meta;
     for (const line of m[1].split('\n')) {
-      const kv = line.match(/^description:\s*(.*)$/);
-      if (kv) return kv[1].replace(/^['"]|['"]$/g, '');
+      const kv = line.match(/^(name|description):\s*(.*)$/);
+      if (kv) meta[kv[1]] = kv[2].replace(/^['"]|['"]$/g, '');
     }
   } catch (_) { /* ignore */ }
-  return '';
+  return meta;
+}
+
+// Collect skills at one path: a directory holding SKILL.md directly is a single
+// skill (its frontmatter `name` wins over the directory basename, so the name is
+// stable regardless of install location); any other directory is scanned one
+// level for skill subdirectories.
+function collectSkillsAtPath(skillPath, fallbackName) {
+  const out = [];
+  if (fs.existsSync(path.join(skillPath, 'SKILL.md'))) {
+    const meta = readSkillMeta(skillPath);
+    out.push({
+      name: meta.name || fallbackName || path.basename(skillPath),
+      dir: skillPath,
+      description: meta.description,
+    });
+    return out;
+  }
+  if (!fs.existsSync(skillPath)) return out;
+  for (const entry of fs.readdirSync(skillPath, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const dir = path.join(skillPath, entry.name);
+    if (!fs.existsSync(path.join(dir, 'SKILL.md'))) continue;
+    const meta = readSkillMeta(dir);
+    out.push({ name: meta.name || entry.name, dir, description: meta.description });
+  }
+  return out;
 }
 
 // Resolve skills from a plugin.json manifest + its root directory.
-// If manifest.skills is an array, use those paths; otherwise scan skills/ subdir.
+//
+// `skills` may be omitted (scan skills/, or a root SKILL.md for a single-skill
+// plugin), a string path, or an array of string paths — the documented forms:
+//
+//   "skills": "./custom/skills/"
+//   "skills": ["./skills/integrator-sdk"]
+//
+// A legacy array of { name, path } objects is also accepted, because the
+// Vocdoni remote plugins shipped that shape before it was known to be invalid.
+// Claude Code rejects the object form outright ("skills: Invalid input"), so
+// emit the string form in any manifest you author.
 function skillsFromManifest(manifest, rootDir) {
+  const declared = manifest.skills;
+  const entries = typeof declared === 'string'
+    ? [declared]
+    : Array.isArray(declared) ? declared : null;
+
   const skills = [];
-  if (Array.isArray(manifest.skills)) {
-    for (const s of manifest.skills) {
-      const skillPath = path.join(rootDir, s.path);
-      if (!fs.existsSync(path.join(skillPath, 'SKILL.md'))) continue;
-      skills.push({ name: s.name, dir: skillPath, description: readSkillDescription(skillPath) });
+  const seen = new Set();
+  const add = (found) => {
+    for (const s of found) {
+      if (seen.has(s.dir)) continue;
+      seen.add(s.dir);
+      skills.push(s);
+    }
+  };
+
+  if (entries) {
+    for (const entry of entries) {
+      const rel = typeof entry === 'string' ? entry : entry && entry.path;
+      if (typeof rel !== 'string' || !rel) continue;
+      const resolved = path.resolve(rootDir, rel);
+      // Declared paths must stay inside the plugin root.
+      if (resolved !== rootDir && !resolved.startsWith(rootDir + path.sep)) continue;
+      add(collectSkillsAtPath(resolved, typeof entry === 'object' && entry ? entry.name : ''));
     }
   } else {
-    const skillsDir = path.join(rootDir, 'skills');
-    if (fs.existsSync(skillsDir)) {
-      for (const s of fs.readdirSync(skillsDir, { withFileTypes: true })) {
-        if (!s.isDirectory()) continue;
-        const skillPath = path.join(skillsDir, s.name);
-        if (!fs.existsSync(path.join(skillPath, 'SKILL.md'))) continue;
-        skills.push({ name: s.name, dir: skillPath, description: readSkillDescription(skillPath) });
-      }
-    }
+    add(collectSkillsAtPath(path.join(rootDir, 'skills')));
+    // Plugin with a single SKILL.md at its root and no skills/ directory.
+    if (skills.length === 0) add(collectSkillsAtPath(rootDir, manifest.name));
   }
+
   skills.sort((a, b) => a.name.localeCompare(b.name));
   return skills;
 }
