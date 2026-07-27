@@ -240,11 +240,13 @@ function isRemoteSource(source) {
 function cloneOrPullRepo(name, url, ref) {
   const dest = path.join(CACHE_DIR, name);
   if (fs.existsSync(path.join(dest, '.git'))) {
-    const fetchArgs = ['-C', dest, 'fetch', '--quiet', '--depth', '1', 'origin'];
-    if (ref) fetchArgs.push(ref);
-    const r = spawnSync('git', fetchArgs, { encoding: 'utf8' });
+    const r = spawnSync('git', ['-C', dest, 'fetch', '--quiet', '--depth', '1', 'origin', ref || 'HEAD'], { encoding: 'utf8' });
     if (r.status !== 0) throw new Error(`git fetch failed for ${name}: ${r.stderr || r.stdout}`);
-    const up = spawnSync('git', ['-C', dest, ref ? 'checkout' : 'merge', '--quiet', ...(ref ? [] : ['--ff-only']), 'FETCH_HEAD'], { encoding: 'utf8' });
+    // Hard reset rather than merge: this is a cache we own, and a depth-1 fetch
+    // re-shallows at the new tip, so old and new histories share no ancestor —
+    // a merge fails with "refusing to merge unrelated histories" the moment the
+    // remote advances. Reset also survives force-pushes and rebases upstream.
+    const up = spawnSync('git', ['-C', dest, 'reset', '--hard', '--quiet', 'FETCH_HEAD'], { encoding: 'utf8' });
     if (up.status !== 0) throw new Error(`git update failed for ${name}: ${up.stderr || up.stdout}`);
   } else {
     fs.mkdirSync(dest, { recursive: true });
