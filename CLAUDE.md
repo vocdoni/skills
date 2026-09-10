@@ -23,8 +23,8 @@ The two `description` fields deliberately differ and are **not** kept in sync: `
 **Prefer omitting `skills` from `plugin.json` entirely.** `skills/` is the default discovery location for both consumers, so a plugin that puts each skill at `skills/<name>/SKILL.md` needs no manifest field — which is what every plugin here does. If you must declare paths, Claude Code accepts only a string or an array of strings:
 
 ```json
-"skills": ["./skills/integrator-sdk"]      // valid
-"skills": [{"name": "…", "path": "…"}]     // rejected: "skills: Invalid input"
+"skills": ["./skills/vocdoni-integrator-sdk"]   // valid
+"skills": [{"name": "…", "path": "…"}]          // rejected: "skills: Invalid input"
 ```
 
 The object form fails the **whole plugin**, not just that entry. `skillsFromManifest` in `bin/install.js` accepts strings, the legacy object form, a bare string path, an implicit `skills/` scan, and a single root-level `SKILL.md`; declared paths that escape the plugin root are ignored. That tolerance is deliberate — it means a manifest written for either consumer resolves here — but it also means **this installer cannot tell you when a manifest is invalid for Claude Code.** `vocdoni-integrator-sdk` shipped the object form and `npx vocdoni-skills list` resolved it happily while `/plugin install` rejected the plugin outright. When authoring a manifest, the npx CLI is not the authority; the Claude Code schema is.
@@ -34,11 +34,11 @@ The object form fails the **whole plugin**, not just that entry. `skillsFromMani
 A marketplace entry whose `source` is a **git source object** is not in this repo at all:
 
 ```json
-"source": { "source": "github", "repo": "vocdoni/integrator-sdk" }
+"source": { "source": "github", "repo": "vocdoni/vocdoni-integrator-sdk" }
 "source": { "source": "url", "url": "https://gitlab.com/team/plugin.git", "ref": "v2.0.0" }
 ```
 
-`bin/install.js` shallow-clones it into `~/.cache/vocdoni-skills/<name>/` (fetch + ff-only merge if already cached) and then treats it exactly like a local plugin. `vocdoni-integrator-sdk` is the live example — it lives at `github.com/vocdoni/integrator-sdk`. Fetch failures warn and skip rather than abort; `--offline` uses the cache and never touches the network. A remote repo must carry its own `.claude-plugin/plugin.json`.
+`bin/install.js` shallow-clones it into `~/.cache/vocdoni-skills/<name>/` (if already cached: re-point `origin` at the manifest URL, fetch that URL, hard-reset to `FETCH_HEAD`) and then treats it exactly like a local plugin. `vocdoni-integrator-sdk` is the live example — it lives at `github.com/vocdoni/vocdoni-integrator-sdk`. Fetch failures warn and skip rather than abort; `--offline` uses the cache and never touches the network. A remote repo must carry its own `.claude-plugin/plugin.json`.
 
 **Use the object form, never a bare URL string.** `resolveRemoteSource` in `bin/install.js` still accepts `"https://…"`/`"git@…"` strings for backwards compatibility, but Claude Code's marketplace parser does not — it fails the install with *"This plugin uses a source type your Claude Code version does not support"*, which reads like a version problem and is not one. Supported object types: `github` (`repo`, optional `ref`/`sha`), `url`/`git` (`url`, optional `ref`/`sha`), and `git-subdir` (`url` + `path`) for a plugin inside a monorepo.
 
@@ -94,3 +94,5 @@ npx vitest run test/path-safety.test.ts   # single test file
 ## Releasing
 
 Bump `version` in lockstep across the three places it appears: `package.json` (CLI), the changed plugin's `plugin.json`, and that plugin's entry in `.claude-plugin/marketplace.json`. Then tag (`vX.Y.Z`) and `npm publish --access public`.
+
+**Remote plugins are the exception: they declare no `version` in their marketplace entry.** Their `plugin.json` lives in another repo, so a version here could only ever drift — and Claude Code [uses the `plugin.json` value without warning](https://code.claude.com/docs/en/plugin-marketplaces), so a stale entry silently masks it. `version` is optional in a marketplace entry; omitting it leaves the remote `plugin.json` as the single source of truth, and it is that field (not this file) which decides whether an installed user gets the update.
