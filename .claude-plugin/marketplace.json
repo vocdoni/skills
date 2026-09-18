@@ -17,6 +17,16 @@
       "homepage": "https://github.com/vocdoni/skills"
     },
     {
+      "name": "vocdoni-stripe",
+      "source": "./plugins/vocdoni-stripe",
+      "description": "Stripe operations for the Vocdoni SaaS: create subscriptions for existing customers with the org-address metadata the backend needs, clone per-customer Custom / Integrator Starter plan products, handle discounts and payment collection, always confirming before writing. Includes an environment-guarding Stripe CLI wrapper and a verified backend contract reference.",
+      "version": "0.1.0",
+      "category": "engineering",
+      "tags": ["vocdoni", "stripe", "billing", "subscriptions", "saas", "stripe-cli"],
+      "license": "AGPL-3.0-or-later",
+      "homepage": "https://github.com/vocdoni/skills"
+    },
+    {
       "name": "vocdoni-sdk",
       "source": "./plugins/vocdoni-sdk",
       "description": "Exhaustive reference for the Vocdoni SDK (@vocdoni/sdk): client setup, accounts, every census type, all election variants (approval/ranked/multichoice/budget/quadratic), anonymous (ZK) voting, CSP, and Census3, with copy-pasteable runnable recipes.",

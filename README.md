@@ -60,6 +60,14 @@ Tooling we use internally for our own development workflow. Nothing stops you fr
 | `go-code-quality`    | Production checklist: domain types, error contracts, context, goroutines. |
 | `go-modern`          | Version-aware modern Go syntax. Reads `go.mod` to pick the right target.  |
 
+### 💳 `vocdoni-stripe` — Stripe operations for the SaaS
+
+| Skill                 | What it covers                                                                                                                                                                                                                          |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stripe-subscription` | Create a subscription for an existing customer through the Stripe CLI (or MCP): prompts for the minimum inputs, clones per-customer *Custom* / *Integrator Starter* plan products, handles discounts and collection, confirms before writing. |
+
+Requires `jq` and either the [Stripe CLI](https://docs.stripe.com/stripe-cli) with a started session (`stripe login`, then `stripe agent setup` for its own skill) or a Stripe MCP server.
+
 ### 🤖 `pi-subagent` — delegate to Pi subagents
 
 Delegate work to **named [Pi][pi] subagents** — reusable personas, each with its own model and tools (including MCP tools) — and to bounded one-off coding tasks. Unlike the skill plugins above, this one bundles a local **MCP server** that launches Pi (`pi --mode rpc`), isolates code edits in a detached **git worktree**, and hands back a summary plus a diff to review. Changes are never applied automatically.
