@@ -62,6 +62,13 @@ On success the org gets `PlanID`, `StripeSubscriptionID`, `BillingPeriod`,
 `StartDate`, `RenewalDate`, `Active` (only when status is `active`) and
 `Email` (the Stripe customer email).
 
+The previous plan is overwritten, not stacked or remembered. That includes a
+plan the org holds with no Stripe subscription behind it (the free integrator
+plan assigned at `integrator: true` creation), and a later cancel or delete of
+the new subscription does not restore it. Every endpoint subscribed to the
+account applies this, so a sandbox subscription rewrites the org in dev and
+staging alike.
+
 ## Customers
 
 After saving the org, the handler updates the **customer** metadata `address`

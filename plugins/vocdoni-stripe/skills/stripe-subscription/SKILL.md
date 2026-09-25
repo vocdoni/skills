@@ -48,6 +48,16 @@ the environment the user chose, not against whatever the error suggests. The CLI
 `scripts/stripe-json.sh env` again right before Phase 4. On mismatch tell the
 user to run `! stripe switch` (it is interactive) and re-check.
 
+**Sandbox is not isolated.** A sandbox account is wired to the dev and
+staging backends through its webhook endpoints, so every write there changes
+real org records in those backends. List them with
+`webhook_endpoints list` and show the enabled URLs in the confirmation table.
+When any is enabled, a subscription created for an org address moves that org
+to the new plan in each of those backends at once, and canceling or deleting
+it afterwards does not bring the previous plan back. Only use an org address
+the user has confirmed is disposable in every listed backend, and do not
+create "test" subscriptions to clean up later: there is no cleanup.
+
 Read `references/stripe-cli.md` now for the command cookbook. Read
 `references/backend-contract.md` if you need to know why a field matters.
 
@@ -76,7 +86,9 @@ single `AskUserQuestion` call (one question per missing item):
 
 - **Customer**: `customers list --email <email>`. Exactly one match, or stop
   and report what you found. Note name, currency, `invoice_settings.default_payment_method`
-  and `payment_methods list --customer` (this decides the collection default).
+  and `payment_methods list --customer` (together they decide the collection
+  default: a card that is attached but not the customer's default is only
+  charged if you pass it as the subscription's `default_payment_method`).
 - **Product and price**: search by name, then filter to the exact name because
   search is a substring match and `Custom - someone@…` copies would otherwise
   win. Then `prices list --product <id> --active` and pick the recurring price
@@ -86,6 +98,13 @@ single `AskUserQuestion` call (one question per missing item):
   (see the cookbook; use the list, not search, because search lags by up to a
   minute). If one exists,
   stop and name it: the user should update or cancel that one instead.
+- **The org's current plan**: the new subscription replaces the org's plan in
+  the backend, including a plan that has no Stripe subscription at all (the
+  free integrator plan an integrator org starts on). Stripe cannot show that
+  plan, so ask whether the org is an integrator. An integrator org given a
+  product without `integratorLimits.maxManagedOrgs > 0` (plain `Custom`,
+  `Starter`, `Professional`) stops being an integrator; offer
+  `Integrator Starter` instead, or confirm the downgrade is intended.
 - **Customer's other subscriptions**: warn, do not block.
 - **Currency**: the price currency must match the customer's currency when the
   customer already has one, or Stripe rejects the create.
@@ -122,8 +141,10 @@ change, re-render, ask again. Never proceed on silence or an implicit yes.
 | Setting            | Value                                             |
 |--------------------|---------------------------------------------------|
 | Environment        | live · Account Name                               |
+| Backends notified  | every enabled webhook endpoint URL                |
 | Customer           | cus_xxx · Client Name · client@example.org        |
 | Product            | prod_xxx · Professional                           |
+| Org plan change    | Integrator Free → Professional (not integrator)   |
 | Price              | price_xxx · yearly · 1 890,00 EUR                 |
 | metadata.address   | 0x0000000000000000000000000000000000000000        |
 | --- not defined (defaults) ---                                          |
@@ -138,7 +159,10 @@ change, re-render, ask again. Never proceed on silence or an implicit yes.
 What each optional row means and its alternatives:
 
 - **Collection**. Default `send_invoice` with `days_until_due=30` when the
-  customer has no default payment method, else `charge_automatically`.
+  customer has no default payment method, else `charge_automatically`. If
+  the customer has saved payment methods but none is the default, ask which
+  one to charge and pass it as `default_payment_method`; without it Stripe
+  has nothing to charge and the subscription is left `incomplete`.
   Alternatives: the other one, or a **checkout link** (a hosted Checkout
   Session the customer pays; Stripe then creates the subscription itself, so
   Phase 5 verifies the session instead). `charge_automatically` with no card
@@ -174,7 +198,11 @@ What each optional row means and its alternatives:
    `checkout sessions create` for the link mode). See the cookbook for the
    exact flags.
 5. `send_invoice`: finalize the first invoice right away
-   (`invoices finalize_invoice`). A zero-total invoice becomes `paid` on the
+   (`invoices finalize_invoice`), but only if the create response's
+   `latest_invoice` exists and is still `draft`. A trial's zero invoice is
+   already `paid`, and a future `billing_cycle_anchor` may leave no invoice
+   at all; finalizing those fails after the subscription already exists, so
+   skip this step instead. A zero-total invoice becomes `paid` on the
    spot; a real one gets a `hosted_invoice_url`. Finalizing by hand does not
    email it: run `invoices send_invoice` too if the customer should get
    Stripe's email. `finalize_invoice` and `send_invoice` each return a
@@ -182,9 +210,9 @@ What each optional row means and its alternatives:
    one from whichever call you made last (or from the Phase 5 read-back),
    not the finalize-time one if you also sent it.
 
-Destructive CLI commands (`delete`, `cancel`, `void_invoice`) prompt
-interactively and hang inside an agent; the wrapper refuses them without
-`--confirm`, so always pass it.
+Destructive CLI commands (`delete`, `delete_*`, `cancel`, `void_invoice`,
+`mark_uncollectible`, `detach`) can prompt interactively and hang inside an
+agent; the wrapper refuses them without `--confirm`, so always pass it.
 
 ## Phase 5: verify and report
 
@@ -221,5 +249,12 @@ reports).
 - The customer is missing or ambiguous, the product name matches several
   active products, or the address is malformed.
 - Another active subscription already carries that address.
+- The environment is sandbox, it has enabled webhook endpoints, and the user
+  has not confirmed the org address is disposable in those backends.
+- The org is an integrator and the chosen product is not, and the user has
+  not confirmed the downgrade.
 - The user asked for something this skill does not do: changing an existing
   subscription, refunds, cancellations. Say so and offer the CLI command.
+
+Related: [[stripe-best-practices]] for general Stripe API choices,
+[[stripe-docs]] to look up a parameter this skill does not cover.

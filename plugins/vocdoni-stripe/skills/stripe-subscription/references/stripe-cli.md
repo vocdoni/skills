@@ -15,7 +15,8 @@ same mode (a second live account, another sandbox).
 The wrapper adds `--live` for live, checks the banner (before the command
 too, for anything that is not a `list` / `retrieve` / `search`), strips it,
 turns `{"error": …}` bodies into a non-zero exit, and refuses `delete` /
-`delete_discount` / `cancel` / `void_invoice` without `--confirm`. Everything it prints on stdout is JSON, so
+`delete_*` / `cancel` / `void_invoice` / `mark_uncollectible` / `detach`
+without `--confirm`. Everything it prints on stdout is JSON, so
 pipe straight into `jq`.
 
 ## Quirks worth knowing
@@ -43,6 +44,9 @@ pipe straight into `jq`.
 ## Lookups
 
 ```bash
+# backends that will act on every write (sandbox usually reaches dev and staging)
+$sj webhook_endpoints list | jq '[.data[] | select(.status == "enabled") | .url]'
+
 # customer by email (expect exactly one)
 $sj customers list --email client@example.org | jq '.data | length, (.[0] | {id, name, email, currency, default_pm: .invoice_settings.default_payment_method})'
 
@@ -61,14 +65,19 @@ $sj prices list --product prod_xxx --active --limit 100 \
 # paginated (100 per page is a hard cap, and a missed page is a missed duplicate).
 # No --status: the default already returns every non-canceled subscription,
 # including unpaid and paused ones that still hold the org.
+# Pages are collected first and the filter runs only if every page succeeded:
+# a failed page must stop the check, not shrink it to an empty "no duplicate".
 addr=0x0000000000000000000000000000000000000000
-after=()
-while :; do
-  page="$($sj subscriptions list --limit 100 "${after[@]}")"
-  printf '%s\n' "$page"
-  [[ "$(jq -r .has_more <<<"$page")" == true ]] || break
-  after=(--starting-after "$(jq -r '.data[-1].id' <<<"$page")")
-done | jq -s --arg a "$addr" '[.[].data[] | select(.status != "incomplete_expired") | select((.metadata.address // "" | ascii_downcase) == ($a | ascii_downcase)) | {id, status, customer}]'
+pages="$(
+  after=()
+  while :; do
+    page="$($sj subscriptions list --limit 100 "${after[@]}")" || exit 1
+    printf '%s\n' "$page"
+    [[ "$(jq -r .has_more <<<"$page")" == true ]] || break
+    after=(--starting-after "$(jq -r '.data[-1].id' <<<"$page")")
+  done
+)" && jq -s --arg a "$addr" '[.[].data[] | select(.status != "incomplete_expired") | select((.metadata.address // "" | ascii_downcase) == ($a | ascii_downcase)) | {id, status, customer}]' <<<"$pages" \
+  || echo "duplicate check FAILED; do not continue" >&2
 
 # customer's other subscriptions
 $sj subscriptions list --customer cus_xxx | jq '[.data[] | {id, status, product: .items.data[0].price.product}]'
@@ -113,15 +122,19 @@ $sj subscriptions create \
   # -d cancel_at=1790000000
   # -d "description=…"
 
-# charge_automatically with a saved card
+# charge_automatically with the customer's default payment method
 $sj subscriptions create -d customer=cus_xxx -d "items[0][price]=price_xxx" \
   -d "metadata[address]=0x…" -d collection_method=charge_automatically
+# a saved card that is NOT the customer's default is never picked up on its own:
+#   add: -d default_payment_method=pm_xxx
 
 # charge_automatically WITHOUT a card: created incomplete, expires in 23h unless paid
 #   add: -d payment_behavior=default_incomplete
 #   then hand over: latest_invoice.hosted_invoice_url
 
-# finalize the first invoice of a send_invoice subscription
+# finalize the first invoice of a send_invoice subscription, only while it is
+# still a draft (a trial invoice is already paid; a future anchor may have none)
+$sj invoices retrieve in_xxx | jq -r .status          # expect: draft
 $sj invoices finalize_invoice in_xxx | jq '{id, status, total, amount_due, amount_paid, hosted_invoice_url}'
 
 # a manually finalized invoice is not emailed; send it if the customer should get the email
