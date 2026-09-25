@@ -91,10 +91,14 @@ What the script does, in order, and why:
    its prices exist has zero prices, which is exactly what the backend's
    free-integrator selector matches. An integrator signing up in that window
    would land on the client's plan.
-4. One `prices create` per template interval (year, month), currency and
-   amount from the template unless overridden, nickname
+4. One `prices create` per template interval (year, month), currency,
+   amount and `tax_behavior` from the template unless overridden, nickname
    `<Template> yearly|monthly (<label>)`, and `freeTrialDays` copied if the
-   template's yearly price had it.
+   template's price had it. It refuses a template with more than one active
+   price per interval (the backend keeps the last one listed, so which to copy
+   is ambiguous), a price with no `unit_amount` unless you pass the amount,
+   and an integrator copy whose prices are all zero (it would compete with
+   the free integrator plan).
 5. `products update … active=true`: the product becomes visible to the
    backend only now, with both prices, through the `product.updated` webhook
    it listens to (`price.*` events are ignored).

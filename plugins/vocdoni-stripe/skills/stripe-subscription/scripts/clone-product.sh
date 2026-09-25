@@ -17,7 +17,7 @@
 #   --dry-run        print the exact stripe invocations and the metadata that
 #                    would be written; write nothing.
 #
-# Environment: STRIPE_ENV=live|sandbox (default live), passed through to stripe-json.sh.
+# Environment: STRIPE_ENV=live|sandbox (required), passed through to stripe-json.sh.
 #
 # Output (stdout): one JSON object {product, prices: {year, month}, name}.
 #
@@ -125,38 +125,72 @@ product_args=(products create
   -d "metadata[orgEmail]=$org_email"
   -d "metadata[copiedFrom]=$tpl_id"
   -d "metadata[copiedAt]=$now")
-while IFS=$'\t' read -r k v; do
-  product_args+=(-d "metadata[$k]=$v")
-done < <(jq -r 'to_entries[] | [.key, .value] | @tsv' <<<"$merged")
+# NUL-delimited so the JSON values go through verbatim (@tsv would double any
+# backslash and corrupt an escaped quote inside a block).
+while IFS= read -r -d '' kv; do
+  product_args+=(-d "$kv")
+done < <(jq -j 'to_entries[] | "metadata[\(.key)]=\(.value)\u0000"' <<<"$merged")
 
-# Recurring prices of the template: one per interval (first active wins).
+# Recurring prices of the template. The backend keeps the LAST active price it
+# lists per interval, so a template with several is ambiguous: refuse rather
+# than copy a price the backend does not actually use for the template.
 prices="$("$sj" prices list --product "$tpl_id" --active --limit 100 \
-  | jq -c '[.data[] | select(.recurring != null and (.recurring.interval == "year" or .recurring.interval == "month"))]
-           | group_by(.recurring.interval) | map(.[0])')"
+  | jq -c '[.data[] | select(.recurring != null and (.recurring.interval == "year" or .recurring.interval == "month"))]')"
 [[ "$(jq 'length' <<<"$prices")" -gt 0 ]] || { echo "template $tpl_id has no active recurring prices" >&2; exit 1; }
+dup="$(jq -r 'group_by(.recurring.interval) | map(select(length > 1) | "\(.[0].recurring.interval): \(map(.id) | join(", "))") | .[]' <<<"$prices")"
+[[ -z "$dup" ]] || { echo "template $tpl_id has more than one active price per interval ($dup); archive the extras first" >&2; exit 1; }
+for pair in "year:$yearly" "month:$monthly"; do
+  [[ -z "${pair#*:}" ]] || jq -e --arg i "${pair%%:*}" 'any(.recurring.interval == $i)' <<<"$prices" >/dev/null \
+    || { echo "template $tpl_id has no active ${pair%%:*} price to override" >&2; exit 2; }
+done
 
-price_cmds=()
-while IFS=$'\t' read -r interval currency amount trial; do
+# One row per price, \x1f-separated: unlike tab it is not IFS whitespace, so
+# empty fields (no trial, no tax behavior) do not shift the ones after them.
+price_rows=() paid=0
+while IFS=$'\x1f' read -r interval currency amount trial tax; do
   case "$interval" in
-    year)  [[ -n "$yearly" ]] && amount="$yearly"; word=yearly ;;
-    month) [[ -n "$monthly" ]] && amount="$monthly"; word=monthly ;;
+    year)  [[ -n "$yearly" ]] && amount="$yearly" ;;
+    month) [[ -n "$monthly" ]] && amount="$monthly" ;;
   esac
+  [[ "$amount" =~ ^[0-9]+$ ]] \
+    || { echo "template $interval price has no unit_amount (tiered or decimal pricing); pass --${interval}ly explicitly" >&2; exit 1; }
+  (( 10#$amount > 0 )) && paid=1
+  price_rows+=("$interval"$'\x1f'"$currency"$'\x1f'"$amount"$'\x1f'"$trial"$'\x1f'"$tax")
+done < <(jq -r '.[] | [.recurring.interval, .currency, (.unit_amount // ""), (.metadata.freeTrialDays // ""), (.tax_behavior // "")]
+                 | map(tostring) | join("\u001f")' <<<"$prices")
+
+# The backend picks THE free integrator plan with an unordered FindOne on
+# maxManagedOrgs > 0 and zero prices; an all-zero integrator copy would make
+# that choice random for every integrator signup.
+if [[ $paid -eq 0 ]] && jq -e '(.integratorLimits // "{}" | fromjson | .maxManagedOrgs // 0) > 0' <<<"$merged" >/dev/null; then
+  echo "refusing an integrator copy whose prices are all zero: it would compete with the free integrator plan (see references/backend-contract.md)" >&2
+  exit 2
+fi
+
+# Sets `args` to the prices create invocation for one row.
+price_args() {
+  local product="$1" interval currency amount trial tax
+  IFS=$'\x1f' read -r interval currency amount trial tax <<<"$2"
   args=(prices create
-    -d "product=__PRODUCT__"
+    -d "product=$product"
     -d "currency=$currency"
     -d "unit_amount=$amount"
     -d "recurring[interval]=$interval"
-    -d "nickname=$tpl_name $word ($label)")
-  [[ -n "$trial" && "$trial" != "null" ]] && args+=(-d "metadata[freeTrialDays]=$trial")
-  price_cmds+=("$(printf '%q ' "${args[@]}")")
-done < <(jq -r '.[] | [.recurring.interval, .currency, .unit_amount, (.metadata.freeTrialDays // "")] | @tsv' <<<"$prices")
+    -d "nickname=$tpl_name ${interval}ly ($label)")
+  [[ -n "$trial" ]] && args+=(-d "metadata[freeTrialDays]=$trial")
+  [[ -n "$tax" && "$tax" != unspecified ]] && args+=(-d "tax_behavior=$tax")
+  return 0
+}
 
 if [[ $dry_run -eq 1 ]]; then
   echo "# template: $tpl_id ($tpl_name)"
   echo "# metadata blocks after overrides:"
   jq '.' <<<"$merged" | sed 's/^/#   /'
   echo "stripe-json.sh $(printf '%q ' "${product_args[@]}")"
-  for c in "${price_cmds[@]}"; do echo "stripe-json.sh ${c/__PRODUCT__/<new product id>}"; done
+  for row in "${price_rows[@]}"; do
+    price_args "<new product id>" "$row"
+    echo "stripe-json.sh $(printf '%q ' "${args[@]}")"
+  done
   echo "stripe-json.sh products update <new product id> -d active=true"
   exit 0
 fi
@@ -165,9 +199,8 @@ product="$("$sj" "${product_args[@]}")"
 product_id="$(jq -r '.id' <<<"$product")"
 
 result="$(jq -n --arg p "$product_id" --arg n "$new_name" '{product: $p, name: $n, prices: {}}')"
-for c in "${price_cmds[@]}"; do
-  eval "args=($c)"
-  args=("${args[@]/__PRODUCT__/$product_id}")
+for row in "${price_rows[@]}"; do
+  price_args "$product_id" "$row"
   price="$("$sj" "${args[@]}")"
   interval="$(jq -r '.recurring.interval' <<<"$price")"
   result="$(jq --arg i "$interval" --arg id "$(jq -r .id <<<"$price")" '.prices[$i] = $id' <<<"$result")"

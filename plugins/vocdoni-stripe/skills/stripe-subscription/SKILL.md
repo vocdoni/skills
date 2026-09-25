@@ -22,7 +22,8 @@ confirmed the table in Phase 3.
 JSON with it) and one of:
 
 - The Stripe CLI, installed and with a started session. Check with
-  `scripts/stripe-json.sh env`. If it fails it prints what is missing and how
+  `scripts/stripe-json.sh env` (without `STRIPE_ENV` it only reports the
+  account and mode; the environment is chosen in Phase 1). If it fails it prints what is missing and how
   to fix it: install `jq`, install the CLI, `stripe login`, and
   `stripe agent setup` to install the Stripe CLI agent skill. Install what
   you can yourself (a package manager the user already uses is fine) and ask
@@ -34,10 +35,13 @@ JSON with it) and one of:
 
 **Environment.** The environment is an input like any other, collected in
 Phase 1 and shown in the confirmation table; do not infer it from what the CLI
-happens to be pointing at. Once known, `export STRIPE_ENV=live|sandbox` for
-the whole session and run every Stripe command through
-`scripts/stripe-json.sh`, which reads the CLI's own banner to check the mode
-and refuses on mismatch. The CLI keeps one active account and a
+happens to be pointing at. Once known, prefix every Stripe command with it
+(`STRIPE_ENV=live scripts/stripe-json.sh …`, same for `clone-product.sh`):
+agent shells usually do not keep an `export` between tool calls, and the
+wrapper refuses to run without it rather than guess. Run every Stripe command
+through `scripts/stripe-json.sh`, which reads the CLI's own banner to check
+the mode and refuses on mismatch. If it reports a mismatch, compare against
+the environment the user chose, not against whatever the error suggests. The CLI keeps one active account and a
 `stripe switch` in another terminal changes it under you, so run
 `scripts/stripe-json.sh env` again right before Phase 4. On mismatch tell the
 user to run `! stripe switch` (it is interactive) and re-check.
@@ -75,9 +79,10 @@ single `AskUserQuestion` call (one question per missing item):
   search is a substring match and `Custom - someone@…` copies would otherwise
   win. Then `prices list --product <id> --active` and pick the recurring price
   for the chosen interval. Show amount, currency, nickname.
-- **One org, one subscription**: list active/trialing/past_due subscriptions
-  and compare `metadata.address` case-insensitively (see the cookbook; use the
-  list, not search, because search lags by up to a minute). If one exists,
+- **One org, one subscription**: list active/trialing/past_due/incomplete
+  subscriptions, every page, and compare `metadata.address` case-insensitively
+  (see the cookbook; use the list, not search, because search lags by up to a
+  minute). If one exists,
   stop and name it: the user should update or cancel that one instead.
 - **Customer's other subscriptions**: warn, do not block.
 - **Currency**: the price currency must match the customer's currency when the
@@ -98,9 +103,10 @@ plan needs its own product. Read `references/product-templates.md` and:
    Phase 3 table so the user sees the exact product and prices to be created.
 4. After confirmation, run it without `--dry-run`. It writes the copy with
    `visibility=private`, `orgAddress`, `orgEmail`, `copiedFrom`, `copiedAt`,
-   creates one yearly and one monthly price, and never sets a default price.
+   creates one price per interval the template has (yearly and/or monthly),
+   and never sets a default price.
 5. Read the product back and check: all metadata blocks parse as JSON, visibility
-   is private, two active recurring prices, and for integrator copies
+   is private, one active recurring price per template interval, and for integrator copies
    `integratorLimits.maxManagedOrgs > 0`. Then continue with its price.
 
 ## Phase 3: confirmation table
@@ -163,7 +169,8 @@ What each optional row means and its alternatives:
 5. `send_invoice`: finalize the first invoice right away
    (`invoices finalize_invoice`). A zero-total invoice becomes `paid` on the
    spot; a real one gets its `hosted_invoice_url`, which is what you hand to
-   the customer.
+   the customer. Finalizing by hand does not email it: run
+   `invoices send_invoice` too if the customer should get Stripe's email.
 
 Destructive CLI commands (`delete`, `cancel`, `void_invoice`) prompt
 interactively and hang inside an agent; the wrapper refuses them without
@@ -190,9 +197,9 @@ Re-read from Stripe; never report from the create response.
 | Environment       | live                                                    |
 ```
 
-Follow with two or three sentences: what happens next (invoice emailed, link
-to send, backend picks the product up on its `product.created` webhook or at
-the next restart), and anything left at a default the user should know about
+Follow with two or three sentences: what happens next (invoice emailed if you
+sent it, link to hand over, backend picks a cloned product up on the
+`product.updated` webhook fired by its activation, or at the next restart), and anything left at a default the user should know about
 (for example, a free subscription still emits zero-value invoices in revenue
 reports).
 

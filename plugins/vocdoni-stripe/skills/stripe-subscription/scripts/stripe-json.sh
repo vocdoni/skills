@@ -9,7 +9,11 @@
 #   stripe-json.sh <stripe args...>         # e.g. stripe-json.sh customers list --email a@b.c
 #
 # Environment:
-#   STRIPE_ENV=live|sandbox   which environment you intend to hit (default: live)
+#   STRIPE_ENV=live|sandbox   which environment you intend to hit (required, no
+#                             default: agent shells often do not keep exported
+#                             variables between calls, and a silent fallback to
+#                             live would turn a forgotten prefix into a live
+#                             write)
 #
 # Why the banner matters: the CLI keeps ONE active account in its config. A
 # `stripe switch` or `stripe login` in another terminal silently changes what
@@ -20,9 +24,15 @@
 # STRIPE_ENV says you wanted.
 set -euo pipefail
 
-want="${STRIPE_ENV:-live}"
+want="${STRIPE_ENV:-}"
 case "$want" in
   live|sandbox) ;;
+  # `env` alone may run unset: it is the preflight, before the user has chosen.
+  "")
+    if [[ "${1:-}" != env ]]; then
+      echo "STRIPE_ENV is not set; prefix every call with STRIPE_ENV=live or STRIPE_ENV=sandbox" >&2
+      exit 2
+    fi ;;
   *) echo "STRIPE_ENV must be 'live' or 'sandbox' (got '$want')" >&2; exit 2 ;;
 esac
 
@@ -71,12 +81,19 @@ fi
 # Refuse un-confirmed destructive commands: without --confirm the CLI opens an
 # interactive prompt that eats stdin and looks like a hang from inside an
 # agent (observed with `subscriptions cancel` and `coupons delete`).
-for word in delete cancel void_invoice mark_uncollectible detach; do
-  if [[ " $* " == *" $word "* && " $* " != *" --confirm "* ]]; then
-    echo "refusing '$word' without --confirm (the CLI would prompt interactively)" >&2
-    exit 2
-  fi
+# Match whole arguments, not the joined string, so a `-d "description=… cancel …"`
+# value is not mistaken for the command word.
+confirmed=0 destructive=""
+for arg in "$@"; do
+  case "$arg" in
+    --confirm) confirmed=1 ;;
+    delete|cancel|void_invoice|mark_uncollectible|detach) destructive="$arg" ;;
+  esac
 done
+if [[ -n "$destructive" && $confirmed -eq 0 ]]; then
+  echo "refusing '$destructive' without --confirm (the CLI would prompt interactively)" >&2
+  exit 2
+fi
 
 run_stripe() {
   if [[ "$want" == live ]]; then
@@ -107,10 +124,16 @@ if [[ "$1" == "env" ]]; then
   rc=$?
   set -e
   IFS='|' read -r mode name <<<"$(detect "$raw")"
+  if [[ -z "$want" && $rc -eq 0 ]]; then
+    # Preflight only: tooling and session work. No environment was asked for,
+    # so nothing is enforced (a live account shows its test mode here).
+    echo "$mode ($name); set STRIPE_ENV before any real command"
+    exit 0
+  fi
   if [[ $rc -ne 0 || "$mode" != "$want" ]]; then
     echo "wanted STRIPE_ENV=$want but the CLI is in: $mode ($name)" >&2
     echo "run '! stripe switch' to change the active account, then retry" >&2
-    [[ $rc -ne 0 ]] && printf '%s\n' "$raw" | grep -v 'Running in' >&2
+    if [[ $rc -ne 0 ]]; then printf '%s\n' "$raw" | grep -v 'Running in' >&2 || true; fi
     exit 3
   fi
   echo "$mode ($name)"

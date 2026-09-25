@@ -1,10 +1,11 @@
 # Stripe CLI cookbook
 
-All commands below assume `export STRIPE_ENV=live` (or `sandbox`) and go
-through the wrapper:
+All commands below go through the wrapper, which refuses to run without
+`STRIPE_ENV`. Agent shells usually drop variables between tool calls, so set
+both at the start of every invocation, not once per session:
 
 ```bash
-sj=<skill dir>/scripts/stripe-json.sh
+export STRIPE_ENV=live sj=<skill dir>/scripts/stripe-json.sh   # or STRIPE_ENV=sandbox
 ```
 
 The wrapper adds `--live` for live, checks the banner, strips it, turns
@@ -38,7 +39,7 @@ pipe straight into `jq`.
 
 ```bash
 # customer by email (expect exactly one)
-$sj customers list --email client@example.org | jq '.data | length, .[0] | {id, name, email, currency, default_pm: .invoice_settings.default_payment_method}'
+$sj customers list --email client@example.org | jq '.data | length, (.[0] | {id, name, email, currency, default_pm: .invoice_settings.default_payment_method})'
 
 # saved payment methods (decides the collection default)
 $sj payment_methods list --customer cus_xxx | jq '[.data[] | {id, type}]'
@@ -51,10 +52,17 @@ $sj products search --limit 100 --query "active:'true' AND name:'Professional'" 
 $sj prices list --product prod_xxx --active --limit 100 \
   | jq '[.data[] | select(.recurring != null) | {id, nickname, currency, unit_amount, interval: .recurring.interval, trial: .metadata.freeTrialDays}]'
 
-# one org, one subscription: list-based, case-insensitive (search lags)
+# one org, one subscription: list-based, case-insensitive (search lags),
+# paginated (100 per page is a hard cap, and a missed page is a missed duplicate)
 addr=0x0000000000000000000000000000000000000000
-for st in active trialing past_due; do
-  $sj subscriptions list --status $st --limit 100
+for st in active trialing past_due incomplete; do
+  after=()
+  while :; do
+    page="$($sj subscriptions list --status $st --limit 100 "${after[@]}")"
+    printf '%s\n' "$page"
+    [[ "$(jq -r .has_more <<<"$page")" == true ]] || break
+    after=(--starting-after "$(jq -r '.data[-1].id' <<<"$page")")
+  done
 done | jq -s --arg a "$addr" '[.[].data[] | select((.metadata.address // "" | ascii_downcase) == ($a | ascii_downcase)) | {id, status, customer}]'
 
 # customer's other subscriptions
@@ -107,6 +115,9 @@ $sj subscriptions create -d customer=cus_xxx -d "items[0][price]=price_xxx" \
 
 # finalize the first invoice of a send_invoice subscription
 $sj invoices finalize_invoice in_xxx | jq '{id, status, total, amount_due, amount_paid, hosted_invoice_url}'
+
+# a manually finalized invoice is not emailed; send it if the customer should get the email
+$sj invoices send_invoice in_xxx | jq '{id, status, hosted_invoice_url}'
 ```
 
 ## Checkout link instead of a direct subscription
