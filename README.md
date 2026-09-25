@@ -13,6 +13,7 @@ claude plugin install vocdoni-integrator-sdk@vocdoni
 
 # Internal tooling we use at Vocdoni:
 claude plugin install vocdoni-go@vocdoni
+claude plugin install vocdoni-stripe@vocdoni
 claude plugin install pi-subagent@vocdoni   # MCP server + agents — needs Pi (see its README)
 
 # Or grab everything in one shot (skill plugins only; pi-subagent is Claude Code-only)
@@ -60,6 +61,14 @@ Tooling we use internally for our own development workflow. Nothing stops you fr
 | `go-code-quality`    | Production checklist: domain types, error contracts, context, goroutines. |
 | `go-modern`          | Version-aware modern Go syntax. Reads `go.mod` to pick the right target.  |
 
+### 💳 `vocdoni-stripe` — Stripe operations for the SaaS
+
+| Skill                 | What it covers                                                                                                                                                                                                                          |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stripe-subscription` | Create a subscription for an existing customer through the Stripe CLI (or MCP): prompts for the minimum inputs, clones per-customer *Custom* / *Integrator Starter* plan products, handles discounts and collection, confirms before writing. |
+
+Requires `jq` and either the [Stripe CLI](https://docs.stripe.com/stripe-cli) with a started session (`stripe login`, then `stripe agent setup` for its own skill) or a Stripe MCP server.
+
 ### 🤖 `pi-subagent` — delegate to Pi subagents
 
 Delegate work to **named [Pi][pi] subagents** — reusable personas, each with its own model and tools (including MCP tools) — and to bounded one-off coding tasks. Unlike the skill plugins above, this one bundles a local **MCP server** that launches Pi (`pi --mode rpc`), isolates code edits in a detached **git worktree**, and hands back a summary plus a diff to review. Changes are never applied automatically.
@@ -90,6 +99,7 @@ claude plugin install vocdoni-sdk@vocdoni
 claude plugin install davinci-sdk@vocdoni
 claude plugin install vocdoni-integrator-sdk@vocdoni
 claude plugin install vocdoni-go@vocdoni
+claude plugin install vocdoni-stripe@vocdoni
 claude plugin install pi-subagent@vocdoni   # see plugins/claude-pi-subagent/plugins/pi-subagent/README.md
 ```
 
@@ -147,6 +157,8 @@ Skills are plain directories at `plugins/<plugin>/skills/<skill>/`.
 │   ├── vocdoni-sdk/
 │   │   └── …
 │   ├── davinci-sdk/
+│   │   └── …
+│   ├── vocdoni-stripe/
 │   │   └── …
 │   └── claude-pi-subagent/             # nested marketplace (pi-agent-tools)
 │       └── plugins/pi-subagent/        # MCP server plugin + agents — see its README

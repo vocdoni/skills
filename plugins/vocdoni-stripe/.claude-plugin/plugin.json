@@ -1,0 +1,22 @@
+{
+  "name": "vocdoni-stripe",
+  "version": "0.1.0",
+  "description": "Stripe operations for the Vocdoni SaaS, run through the Stripe CLI (or a Stripe MCP server). Creates subscriptions for existing customers with the org-address metadata the backend needs, clones per-customer Custom / Integrator Starter plan products from the catalog templates, handles discounts and payment collection, and always confirms before writing. Ships an environment-guarding CLI wrapper, a product-cloning script and a verified reference of what the SaaS backend reads from Stripe.",
+  "author": {
+    "name": "Vocdoni",
+    "url": "https://vocdoni.io"
+  },
+  "homepage": "https://github.com/vocdoni/skills",
+  "repository": "https://github.com/vocdoni/skills",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "claude-code",
+    "skills",
+    "vocdoni",
+    "stripe",
+    "billing",
+    "subscriptions",
+    "saas",
+    "stripe-cli"
+  ]
+}
