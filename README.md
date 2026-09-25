@@ -13,6 +13,7 @@ claude plugin install vocdoni-integrator-sdk@vocdoni
 
 # Internal tooling we use at Vocdoni:
 claude plugin install vocdoni-go@vocdoni
+claude plugin install vocdoni-stripe@vocdoni
 claude plugin install pi-subagent@vocdoni   # MCP server + agents — needs Pi (see its README)
 
 # Or grab everything in one shot (skill plugins only; pi-subagent is Claude Code-only)
@@ -98,6 +99,7 @@ claude plugin install vocdoni-sdk@vocdoni
 claude plugin install davinci-sdk@vocdoni
 claude plugin install vocdoni-integrator-sdk@vocdoni
 claude plugin install vocdoni-go@vocdoni
+claude plugin install vocdoni-stripe@vocdoni
 claude plugin install pi-subagent@vocdoni   # see plugins/claude-pi-subagent/plugins/pi-subagent/README.md
 ```
 
@@ -155,6 +157,8 @@ Skills are plain directories at `plugins/<plugin>/skills/<skill>/`.
 │   ├── vocdoni-sdk/
 │   │   └── …
 │   ├── davinci-sdk/
+│   │   └── …
+│   ├── vocdoni-stripe/
 │   │   └── …
 │   └── claude-pi-subagent/             # nested marketplace (pi-agent-tools)
 │       └── plugins/pi-subagent/        # MCP server plugin + agents — see its README

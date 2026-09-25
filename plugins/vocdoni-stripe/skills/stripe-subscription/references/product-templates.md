@@ -48,8 +48,9 @@ jq '.metadata | {organization: (.organization | fromjson), features: (.features 
 
 - **Overrides** per block, as key/value changes (e.g. "2FAemail to 10000",
   "maxCensus 80000", "whiteLabel true"). Keys must exist on the template; the
-  script refuses unknown block names, and you should refuse unknown keys
-  inside a block too, since the backend would silently ignore them.
+  script refuses unknown block names and unknown top-level keys inside a
+  block, since the backend would silently ignore them. Check the spelling
+  with the user before the dry run rather than after it refuses.
 - **Prices**: yearly and monthly amounts in cents. Default is the template
   amount; custom plans are negotiated, so ask rather than assume.
 - **Label**: short client name used in price nicknames

@@ -78,6 +78,12 @@ done
 # the template itself can land on a later one.
 if [[ "$template" == prod_* ]]; then
   tpl="$("$sj" products retrieve "$template")"
+  # The name path only ever finds active templates; hold an id to the same bar.
+  [[ "$(jq -r '.active' <<<"$tpl")" == true ]] \
+    || { echo "product $template is archived; not a usable template" >&2; exit 1; }
+  if jq -e '.metadata.copiedFrom // .metadata.restoredFrom' <<<"$tpl" >/dev/null; then
+    echo "warning: $template is itself a per-customer copy; cloning its limits, not the catalog template's" >&2
+  fi
 else
   tpl='[]' page=()
   while :; do
@@ -116,9 +122,15 @@ merged="$(jq -c --argjson o "$overrides" '
   | map({key: ., value: (($m[.] | fromjson) * ($o[.] // {}) | tojson)})
   | from_entries' <<<"$tpl")"
 
-# Refuse override keys that do not exist on the template (typo guard).
+# Refuse override blocks, and keys inside a block, that do not exist on the
+# template (typo guard): the backend ignores unknown keys, so a misspelt
+# `2FAEmail` would be written and silently never take effect.
 unknown="$(jq -r --argjson m "$merged" 'keys - ($m | keys) | .[]' <<<"$overrides")"
 [[ -z "$unknown" ]] || { echo "override block(s) not present on template: $unknown" >&2; exit 2; }
+unknown="$(jq -r --argjson m "$(jq -c '.metadata' <<<"$tpl")" '
+  to_entries[] | .key as $b | select(.value | type == "object")
+  | (.value | keys) - ($m[$b] | fromjson | keys) | .[] | "\($b).\(.)"' <<<"$overrides")"
+[[ -z "$unknown" ]] || { echo "override key(s) not present on template: $(tr '\n' ' ' <<<"$unknown")" >&2; exit 2; }
 
 now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 new_name="$tpl_name - $org_email"

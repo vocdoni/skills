@@ -102,11 +102,13 @@ if [[ -n "$destructive" && $confirmed -eq 0 ]]; then
   exit 2
 fi
 
+# stdin is closed so a confirmation prompt the verb list above missed fails
+# fast on EOF instead of hanging the agent.
 run_stripe() {
   if [[ "$want" == live ]]; then
-    stripe "$@" --live
+    stripe "$@" --live </dev/null
   else
-    stripe "$@"
+    stripe "$@" </dev/null
   fi
 }
 
@@ -143,6 +145,13 @@ probe() {
 
 # Exits 3 unless the probe succeeded in the wanted environment.
 require_env() {
+  if [[ $rc -ne 0 && "$mode" == unknown ]]; then
+    # The CLI failed before printing a banner (expired key, network, missing
+    # permission): its own error is the diagnosis, not an account mismatch.
+    echo "stripe CLI probe failed (exit $rc):" >&2
+    printf '%s\n' "$raw" >&2
+    exit 3
+  fi
   if [[ $rc -ne 0 ]] || ! matches "$mode" "$name"; then
     mismatch "$mode" "$name"
     if [[ $rc -ne 0 ]]; then printf '%s\n' "$raw" | grep -v 'Running in' >&2 || true; fi
