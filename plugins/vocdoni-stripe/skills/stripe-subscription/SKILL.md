@@ -63,7 +63,7 @@ Read `references/stripe-cli.md` now for the command cookbook. Read
 
 ## Phase 1: collect the minimum
 
-Five things are required. Take what the user gave, then ask for the rest in a
+Six things are required. Take what the user gave, then ask for the rest in a
 single `AskUserQuestion` call (one question per missing item):
 
 0. **Environment**: `live` or `sandbox`. Ask unless the user said it; offer
@@ -71,12 +71,23 @@ single `AskUserQuestion` call (one question per missing item):
    assume it silently. Whatever the answer, it is what `STRIPE_ENV` gets and
    what the confirmation table shows.
 1. **Customer**: email (or `cus_…` id). The customer must already exist.
-2. **Product**: a catalog name (`Free`, `Starter`, `Professional`, `Custom`,
+2. **Org type**: integrator or regular. The new subscription replaces the
+   org's plan in the backend, and an integrator org is often on
+   `Integrator Free`, which has no Stripe subscription, so Stripe cannot tell
+   you. Take it from the user's wording ("integrator", "Integrator Free",
+   "managed orgs") or from an existing subscription on a product with
+   `integratorLimits.maxManagedOrgs > 0`; otherwise ask. Never guess regular.
+3. **Product**: a catalog name (`Free`, `Starter`, `Professional`, `Custom`,
    `Integrator Starter`, `Integrator Free`) or a `prod_…` id. `Custom` and
-   `Integrator Starter` are templates and go through Phase 2b.
-3. **Billing interval**: `yearly` or `monthly` (or a `price_…` id). If the user
+   `Integrator Starter` are templates and go through Phase 2b. The product
+   keeps the org's type unless the user explicitly asks to change it: for an
+   integrator org, "upgrade", "custom plan" or no product at all means a copy
+   of `Integrator Starter`, never plain `Custom`; for a regular org, `Custom`.
+   A product of the other type is a type change: show it as such in the
+   Phase 3 table and only proceed if the user named that product.
+4. **Billing interval**: `yearly` or `monthly` (or a `price_…` id). If the user
    said nothing and the product's default price is yearly, propose yearly.
-4. **Organization address**: `0x` + 40 hex chars. It becomes the subscription
+5. **Organization address**: `0x` + 40 hex chars. It becomes the subscription
    metadata key `address`, the only thing linking the subscription to the org
    in the backend. A missing or malformed value makes every webhook for that
    subscription fail forever, so validate the shape before doing anything
@@ -98,13 +109,13 @@ single `AskUserQuestion` call (one question per missing item):
   (see the cookbook; use the list, not search, because search lags by up to a
   minute). If one exists,
   stop and name it: the user should update or cancel that one instead.
-- **The org's current plan**: the new subscription replaces the org's plan in
-  the backend, including a plan that has no Stripe subscription at all (the
-  free integrator plan an integrator org starts on). Stripe cannot show that
-  plan, so ask whether the org is an integrator. An integrator org given a
-  product without `integratorLimits.maxManagedOrgs > 0` (plain `Custom`,
-  `Starter`, `Professional`) stops being an integrator; offer
-  `Integrator Starter` instead, or confirm the downgrade is intended.
+- **Org type matches the product**: read the resolved product's
+  `integratorLimits`. An integrator org given a product without
+  `integratorLimits.maxManagedOrgs > 0` (plain `Custom`, `Starter`,
+  `Professional`) stops being an integrator, and a regular org given an
+  integrator product becomes one. If that does not match the Phase 1 type
+  and the user did not name the product explicitly, switch to the matching
+  template before going further.
 - **Customer's other subscriptions**: warn, do not block.
 - **Currency**: the price currency must match the customer's currency when the
   customer already has one, or Stripe rejects the create.
