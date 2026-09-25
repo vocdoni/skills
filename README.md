@@ -42,9 +42,9 @@ SDK references for anyone building voting on Vocdoni — clients, partners, and 
 
 | Skill            | What it covers                                                                                          |
 | ---------------- | ------------------------------------------------------------------------------------------------------- |
-| `integrator-sdk` | The [Integrator SDK][integrator-sdk] packages — `@vocdoni/api-client`, `@vocdoni/api-voting`, `@vocdoni/react-providers`, `@vocdoni/react-components`: CSP auth flow, vote relay, ballot building, and React integration, with runnable recipes. |
+| `vocdoni-integrator-sdk` | The [Integrator SDK][integrator-sdk] packages — `@vocdoni/api-client`, `@vocdoni/api-voting`, `@vocdoni/react-providers`, `@vocdoni/react-components`: CSP auth flow, vote relay, ballot building, and React integration, with runnable recipes. |
 
-This is a **remote plugin**: the skill lives in the [integrator-sdk repo][integrator-sdk] and is cloned (or pulled) on demand by the npx CLI — pass `--offline` to skip fetching and use the cached clone.
+This is a **remote plugin**: the skill lives in the [vocdoni-integrator-sdk repo][integrator-sdk] and is cloned (or pulled) on demand by the npx CLI — pass `--offline` to skip fetching and use the cached clone.
 
 ---
 
@@ -157,7 +157,7 @@ Skills are plain directories at `plugins/<plugin>/skills/<skill>/`.
 └── LICENSE                             # AGPL-3.0-or-later
 ```
 
-`vocdoni-integrator-sdk` has no directory here — it is a remote plugin whose `source` in `marketplace.json` points at [vocdoni/integrator-sdk][integrator-sdk].
+`vocdoni-integrator-sdk` has no directory here — it is a remote plugin whose `source` in `marketplace.json` points at [vocdoni/vocdoni-integrator-sdk][integrator-sdk].
 
 ---
 
@@ -173,6 +173,6 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the skill format, naming rules, and
 [skills-api]: https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview
 [sdk]: https://github.com/vocdoni/vocdoni-sdk
 [davinci-sdk]: https://github.com/vocdoni/davinci-sdk
-[integrator-sdk]: https://github.com/vocdoni/integrator-sdk
+[integrator-sdk]: https://github.com/vocdoni/vocdoni-integrator-sdk
 [vocdoni]: https://vocdoni.io
 [pi]: https://www.npmjs.com/package/@earendil-works/pi-coding-agent

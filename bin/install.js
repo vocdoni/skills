@@ -152,7 +152,7 @@ function collectSkillsAtPath(skillPath, fallbackName) {
 // plugin), a string path, or an array of string paths — the documented forms:
 //
 //   "skills": "./custom/skills/"
-//   "skills": ["./skills/integrator-sdk"]
+//   "skills": ["./skills/vocdoni-integrator-sdk"]
 //
 // A legacy array of { name, path } objects is also accepted, because the
 // Vocdoni remote plugins shipped that shape before it was known to be invalid.
@@ -240,7 +240,14 @@ function isRemoteSource(source) {
 function cloneOrPullRepo(name, url, ref) {
   const dest = path.join(CACHE_DIR, name);
   if (fs.existsSync(path.join(dest, '.git'))) {
-    const r = spawnSync('git', ['-C', dest, 'fetch', '--quiet', '--depth', '1', 'origin', ref || 'HEAD'], { encoding: 'utf8' });
+    // Fetch the manifest URL, not the stored `origin`. A cache cloned before an
+    // upstream rename keeps pointing at the old URL, so a corrected `source` in
+    // marketplace.json would never reach existing users — they would silently
+    // keep relying on the host's rename redirect, which dies the moment someone
+    // claims the old name. Re-point origin too (best effort) so the cache's own
+    // state matches the manifest and stays inspectable.
+    spawnSync('git', ['-C', dest, 'remote', 'set-url', 'origin', url], { encoding: 'utf8' });
+    const r = spawnSync('git', ['-C', dest, 'fetch', '--quiet', '--depth', '1', url, ref || 'HEAD'], { encoding: 'utf8' });
     if (r.status !== 0) throw new Error(`git fetch failed for ${name}: ${r.stderr || r.stdout}`);
     // Hard reset rather than merge: this is a cache we own, and a depth-1 fetch
     // re-shallows at the new tip, so old and new histories share no ancestor —
