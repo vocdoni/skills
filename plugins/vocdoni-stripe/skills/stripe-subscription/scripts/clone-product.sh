@@ -15,9 +15,14 @@
 #   --yearly/--monthly  unit_amount in the smallest currency unit (cents) for the
 #                    cloned price; default = template amount.
 #   --dry-run        print the exact stripe invocations and the metadata that
-#                    would be written; write nothing.
+#                    would be written; write nothing. The template/price
+#                    validation below (ambiguous prices, missing unit_amount,
+#                    an all-zero-price integrator copy) still runs and still
+#                    refuses first: a rejected combination prints nothing to
+#                    preview even under --dry-run.
 #
-# Environment: STRIPE_ENV=live|sandbox (required), passed through to stripe-json.sh.
+# Environment: STRIPE_ENV=live|sandbox (required) and STRIPE_ACCOUNT_NAME
+# (optional), passed through to stripe-json.sh.
 #
 # Output (stdout): one JSON object {product, prices: {year, month}, name}.
 #
@@ -50,7 +55,7 @@ while [[ $# -gt 0 ]]; do
     --yearly) yearly="$2"; shift 2 ;;
     --monthly) monthly="$2"; shift 2 ;;
     --dry-run) dry_run=1; shift ;;
-    -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
+    -h|--help) awk 'NR == 1 { next } /^#/ { print; next } { exit }' "$0"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -69,11 +74,18 @@ done
 
 # Resolve the template. Search is a substring match, so filter to the exact
 # name; a per-customer copy is named "<Template> - <email>" and must not win.
+# Every copy is active and matches too, so read every page: past 100 copies
+# the template itself can land on a later one.
 if [[ "$template" == prod_* ]]; then
   tpl="$("$sj" products retrieve "$template")"
 else
-  tpl="$("$sj" products search --limit 100 --query "active:'true' AND name:'$template'" \
-    | jq --arg n "$template" '[.data[] | select(.name == $n)]')"
+  tpl='[]' page=()
+  while :; do
+    res="$("$sj" products search --limit 100 --query "active:'true' AND name:'$template'" ${page[@]+"${page[@]}"})"
+    tpl="$(jq -c --argjson acc "$tpl" --arg n "$template" '$acc + [.data[] | select(.name == $n)]' <<<"$res")"
+    [[ "$(jq -r '.has_more' <<<"$res")" == true ]] || break
+    page=(-d "page=$(jq -r '.next_page' <<<"$res")")
+  done
   count="$(jq 'length' <<<"$tpl")"
   if [[ "$count" -ne 1 ]]; then
     echo "expected exactly one active product named '$template', found $count" >&2
@@ -146,8 +158,10 @@ done
 
 # One row per price, \x1f-separated: unlike tab it is not IFS whitespace, so
 # empty fields (no trial, no tax behavior) do not shift the ones after them.
+# interval_count is carried over: a quarterly price is interval=month, count=3,
+# and dropping the count would bill the customer every month.
 price_rows=() paid=0
-while IFS=$'\x1f' read -r interval currency amount trial tax; do
+while IFS=$'\x1f' read -r interval count currency amount trial tax; do
   case "$interval" in
     year)  [[ -n "$yearly" ]] && amount="$yearly" ;;
     month) [[ -n "$monthly" ]] && amount="$monthly" ;;
@@ -155,8 +169,8 @@ while IFS=$'\x1f' read -r interval currency amount trial tax; do
   [[ "$amount" =~ ^[0-9]+$ ]] \
     || { echo "template $interval price has no unit_amount (tiered or decimal pricing); pass --${interval}ly explicitly" >&2; exit 1; }
   (( 10#$amount > 0 )) && paid=1
-  price_rows+=("$interval"$'\x1f'"$currency"$'\x1f'"$amount"$'\x1f'"$trial"$'\x1f'"$tax")
-done < <(jq -r '.[] | [.recurring.interval, .currency, (.unit_amount // ""), (.metadata.freeTrialDays // ""), (.tax_behavior // "")]
+  price_rows+=("$interval"$'\x1f'"$count"$'\x1f'"$currency"$'\x1f'"$amount"$'\x1f'"$trial"$'\x1f'"$tax")
+done < <(jq -r '.[] | [.recurring.interval, (.recurring.interval_count // 1), .currency, (.unit_amount // ""), (.metadata.freeTrialDays // ""), (.tax_behavior // "")]
                  | map(tostring) | join("\u001f")' <<<"$prices")
 
 # The backend picks THE free integrator plan with an unordered FindOne on
@@ -169,13 +183,14 @@ fi
 
 # Sets `args` to the prices create invocation for one row.
 price_args() {
-  local product="$1" interval currency amount trial tax
-  IFS=$'\x1f' read -r interval currency amount trial tax <<<"$2"
+  local product="$1" interval count currency amount trial tax
+  IFS=$'\x1f' read -r interval count currency amount trial tax <<<"$2"
   args=(prices create
     -d "product=$product"
     -d "currency=$currency"
     -d "unit_amount=$amount"
     -d "recurring[interval]=$interval"
+    -d "recurring[interval_count]=$count"
     -d "nickname=$tpl_name ${interval}ly ($label)")
   [[ -n "$trial" ]] && args+=(-d "metadata[freeTrialDays]=$trial")
   [[ -n "$tax" && "$tax" != unspecified ]] && args+=(-d "tax_behavior=$tax")
@@ -198,6 +213,11 @@ fi
 product="$("$sj" "${product_args[@]}")"
 product_id="$(jq -r '.id' <<<"$product")"
 
+# From here on a failure leaves an inactive product behind; name it so it can
+# be finished or archived by hand instead of cloned a second time.
+finished=0
+trap '[[ $finished -eq 1 ]] || echo "clone-product.sh: stopped after creating inactive product $product_id; finish or archive it by hand" >&2' EXIT
+
 result="$(jq -n --arg p "$product_id" --arg n "$new_name" '{product: $p, name: $n, prices: {}}')"
 for row in "${price_rows[@]}"; do
   price_args "$product_id" "$row"
@@ -210,5 +230,6 @@ done
 # the backend syncs on (it ignores price.* events), so the plan it caches
 # already carries both prices.
 "$sj" products update "$product_id" -d active=true >/dev/null
+finished=1
 
 jq -c '.' <<<"$result"

@@ -1,6 +1,6 @@
 ---
 name: stripe-subscription
-description: Create a Stripe subscription for an existing Vocdoni SaaS customer, including per-customer "Custom" and "Integrator Starter" plans cloned from template products, with the org-address metadata the backend needs, an optional discount, and a chosen payment-collection mode. Use this whenever the user wants to give an organization a plan, assign or create a subscription, make a subscription free or discounted, set up a custom or integrator plan for a client, or asks anything about creating subscriptions, coupons, or plan products in Stripe for Vocdoni, even if they only mention a customer email, a product name, or a 0x organization address.
+description: Creates a Stripe subscription for an existing Vocdoni SaaS customer, including per-customer "Custom" and "Integrator Starter" plans cloned from template products, with the org-address metadata the backend needs, an optional discount, and a chosen payment-collection mode. Use this whenever the user wants to give an organization a plan, assign or create a subscription, make a subscription free or discounted, set up a custom or integrator plan for a client, or asks anything about creating subscriptions, coupons, or plan products in Stripe for Vocdoni, even if they only mention a customer email, a product name, or a 0x organization address.
 ---
 
 # Stripe subscription for a Vocdoni org
@@ -35,8 +35,10 @@ JSON with it) and one of:
 
 **Environment.** The environment is an input like any other, collected in
 Phase 1 and shown in the confirmation table; do not infer it from what the CLI
-happens to be pointing at. Once known, prefix every Stripe command with it
-(`STRIPE_ENV=live scripts/stripe-json.sh …`, same for `clone-product.sh`):
+happens to be pointing at. Once known, prefix every Stripe command with it and
+with the account name `env` printed (`STRIPE_ENV=live STRIPE_ACCOUNT_NAME='…'
+scripts/stripe-json.sh …`, same for `clone-product.sh`; the mode alone cannot
+tell two live accounts apart):
 agent shells usually do not keep an `export` between tool calls, and the
 wrapper refuses to run without it rather than guess. Run every Stripe command
 through `scripts/stripe-json.sh`, which reads the CLI's own banner to check
@@ -79,8 +81,8 @@ single `AskUserQuestion` call (one question per missing item):
   search is a substring match and `Custom - someone@…` copies would otherwise
   win. Then `prices list --product <id> --active` and pick the recurring price
   for the chosen interval. Show amount, currency, nickname.
-- **One org, one subscription**: list active/trialing/past_due/incomplete
-  subscriptions, every page, and compare `metadata.address` case-insensitively
+- **One org, one subscription**: list every non-canceled subscription
+  (active, trialing, past_due, unpaid, paused, incomplete), every page, and compare `metadata.address` case-insensitively
   (see the cookbook; use the list, not search, because search lags by up to a
   minute). If one exists,
   stop and name it: the user should update or cancel that one instead.
@@ -119,7 +121,7 @@ change, re-render, ask again. Never proceed on silence or an implicit yes.
 ```
 | Setting            | Value                                             |
 |--------------------|---------------------------------------------------|
-| Environment        | live                                              |
+| Environment        | live · Account Name                               |
 | Customer           | cus_xxx · Client Name · client@example.org        |
 | Product            | prod_xxx · Professional                           |
 | Price              | price_xxx · yearly · 1 890,00 EUR                 |
@@ -151,7 +153,12 @@ What each optional row means and its alternatives:
   passed on the create call through `discounts[0][coupon]` so the first invoice
   is already discounted; there is nothing to patch afterwards and nothing to
   delete later. If the user does not want a discount, skip the lookup.
-- **Trial**: `trial_period_days` or `trial_end`.
+- **Trial**: `trial_period_days` or `trial_end`. If the chosen price carries
+  `freeTrialDays` metadata (copied onto a cloned price from its template),
+  that metadata alone does not create a Stripe trial — it is read by other
+  parts of the Vocdoni stack, not by `subscriptions create`. Ask the user
+  whether this subscription should also get that many days as a real Stripe
+  trial, or the customer is billed immediately.
 - **Start / anchor**: `backdate_start_date`, `billing_cycle_anchor`.
 - **Scheduled cancel**: `cancel_at` or `cancel_at_period_end`.
 - **Description / extra metadata**: `description`, extra `metadata[...]`.
@@ -168,9 +175,12 @@ What each optional row means and its alternatives:
    exact flags.
 5. `send_invoice`: finalize the first invoice right away
    (`invoices finalize_invoice`). A zero-total invoice becomes `paid` on the
-   spot; a real one gets its `hosted_invoice_url`, which is what you hand to
-   the customer. Finalizing by hand does not email it: run
-   `invoices send_invoice` too if the customer should get Stripe's email.
+   spot; a real one gets a `hosted_invoice_url`. Finalizing by hand does not
+   email it: run `invoices send_invoice` too if the customer should get
+   Stripe's email. `finalize_invoice` and `send_invoice` each return a
+   different token in that URL for the same invoice; hand the customer the
+   one from whichever call you made last (or from the Phase 5 read-back),
+   not the finalize-time one if you also sent it.
 
 Destructive CLI commands (`delete`, `cancel`, `void_invoice`) prompt
 interactively and hang inside an agent; the wrapper refuses them without
@@ -180,7 +190,9 @@ interactively and hang inside an agent; the wrapper refuses them without
 
 Re-read from Stripe; never report from the create response.
 `subscriptions retrieve <id> -d expand[0]=discounts -d expand[1]=latest_invoice`
-(plus `products retrieve` and `prices list` for a cloned product) and print:
+(plus `coupons retrieve` for the discount row, since the discount only
+carries the coupon id, and `products retrieve` and `prices list` for a cloned
+product) and print:
 
 ```
 | Item              | Value                                                   |

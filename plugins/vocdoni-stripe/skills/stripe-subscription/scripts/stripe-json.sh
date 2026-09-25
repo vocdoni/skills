@@ -14,6 +14,9 @@
 #                             variables between calls, and a silent fallback to
 #                             live would turn a forgotten prefix into a live
 #                             write)
+#   STRIPE_ACCOUNT_NAME=<name>  optional: the account name the banner must show.
+#                             The mode alone cannot tell two live accounts (or
+#                             two sandboxes) apart.
 #
 # Why the banner matters: the CLI keeps ONE active account in its config. A
 # `stripe switch` or `stripe login` in another terminal silently changes what
@@ -25,6 +28,7 @@
 set -euo pipefail
 
 want="${STRIPE_ENV:-}"
+want_name="${STRIPE_ACCOUNT_NAME:-}"
 case "$want" in
   live|sandbox) ;;
   # `env` alone may run unset: it is the preflight, before the user has chosen.
@@ -83,11 +87,14 @@ fi
 # agent (observed with `subscriptions cancel` and `coupons delete`).
 # Match whole arguments, not the joined string, so a `-d "description=… cancel …"`
 # value is not mistaken for the command word.
-confirmed=0 destructive=""
+# `delete_*` covers the DELETE endpoints named after what they remove
+# (`customers delete_discount`, `subscriptions delete_discount`), which prompt too.
+confirmed=0 destructive="" read_only=0
 for arg in "$@"; do
   case "$arg" in
-    --confirm) confirmed=1 ;;
-    delete|cancel|void_invoice|mark_uncollectible|detach) destructive="$arg" ;;
+    --confirm|-c) confirmed=1 ;;
+    delete|delete_*|cancel|void_invoice|mark_uncollectible|detach) destructive="$arg" ;;
+    list|retrieve|search) read_only=1 ;;
   esac
 done
 if [[ -n "$destructive" && $confirmed -eq 0 ]]; then
@@ -118,26 +125,50 @@ detect() {
   echo "${mode}|${name}"
 }
 
-if [[ "$1" == "env" ]]; then
+matches() { [[ "$1" == "$want" && ( -z "$want_name" || "$2" == "$want_name" ) ]]; }
+
+mismatch() {
+  echo "wanted STRIPE_ENV=$want${want_name:+ on '$want_name'} but the CLI is in: $1 ($2)" >&2
+  echo "run '! stripe switch' to change the active account, then retry" >&2
+}
+
+# Sets raw, rc, mode and name from a harmless read.
+probe() {
   set +e
   raw="$(run_stripe balance retrieve 2>&1)"
   rc=$?
   set -e
   IFS='|' read -r mode name <<<"$(detect "$raw")"
+}
+
+# Exits 3 unless the probe succeeded in the wanted environment.
+require_env() {
+  if [[ $rc -ne 0 ]] || ! matches "$mode" "$name"; then
+    mismatch "$mode" "$name"
+    if [[ $rc -ne 0 ]]; then printf '%s\n' "$raw" | grep -v 'Running in' >&2 || true; fi
+    exit 3
+  fi
+}
+
+if [[ "$1" == "env" ]]; then
+  probe
   if [[ -z "$want" && $rc -eq 0 ]]; then
     # Preflight only: tooling and session work. No environment was asked for,
     # so nothing is enforced (a live account shows its test mode here).
     echo "$mode ($name); set STRIPE_ENV before any real command"
     exit 0
   fi
-  if [[ $rc -ne 0 || "$mode" != "$want" ]]; then
-    echo "wanted STRIPE_ENV=$want but the CLI is in: $mode ($name)" >&2
-    echo "run '! stripe switch' to change the active account, then retry" >&2
-    if [[ $rc -ne 0 ]]; then printf '%s\n' "$raw" | grep -v 'Running in' >&2 || true; fi
-    exit 3
-  fi
+  require_env
   echo "$mode ($name)"
   exit 0
+fi
+
+# The banner check below runs after the command. For a read that is enough;
+# a write in the wrong environment has already happened by then, so check
+# first for anything that is not a read.
+if [[ $read_only -eq 0 ]]; then
+  probe
+  require_env
 fi
 
 tmp_err="$(mktemp)"
@@ -157,9 +188,8 @@ if [[ $rc -ne 0 && "$mode" == unknown ]]; then
   printf '%s\n' "$raw" >&2
   exit "$rc"
 fi
-if [[ "$mode" != "$want" ]]; then
-  echo "wanted STRIPE_ENV=$want but the CLI is in: $mode ($name)" >&2
-  echo "run '! stripe switch' to change the active account, then retry" >&2
+if ! matches "$mode" "$name"; then
+  mismatch "$mode" "$name"
   grep -v 'Running in' "$tmp_err" >&2 || true
   exit 3
 fi

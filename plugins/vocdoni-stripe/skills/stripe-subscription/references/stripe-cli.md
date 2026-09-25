@@ -5,12 +5,17 @@ All commands below go through the wrapper, which refuses to run without
 both at the start of every invocation, not once per session:
 
 ```bash
-export STRIPE_ENV=live sj=<skill dir>/scripts/stripe-json.sh   # or STRIPE_ENV=sandbox
+export STRIPE_ENV=live STRIPE_ACCOUNT_NAME='<account name>' sj=<skill dir>/scripts/stripe-json.sh   # or STRIPE_ENV=sandbox
 ```
 
-The wrapper adds `--live` for live, checks the banner, strips it, turns
-`{"error": …}` bodies into a non-zero exit, and refuses `delete` / `cancel` /
-`void_invoice` without `--confirm`. Everything it prints on stdout is JSON, so
+`STRIPE_ACCOUNT_NAME` is the name `stripe-json.sh env` printed and the user
+confirmed; with it set the wrapper also refuses a different account in the
+same mode (a second live account, another sandbox).
+
+The wrapper adds `--live` for live, checks the banner (before the command
+too, for anything that is not a `list` / `retrieve` / `search`), strips it,
+turns `{"error": …}` bodies into a non-zero exit, and refuses `delete` /
+`delete_discount` / `cancel` / `void_invoice` without `--confirm`. Everything it prints on stdout is JSON, so
 pipe straight into `jq`.
 
 ## Quirks worth knowing
@@ -53,17 +58,17 @@ $sj prices list --product prod_xxx --active --limit 100 \
   | jq '[.data[] | select(.recurring != null) | {id, nickname, currency, unit_amount, interval: .recurring.interval, trial: .metadata.freeTrialDays}]'
 
 # one org, one subscription: list-based, case-insensitive (search lags),
-# paginated (100 per page is a hard cap, and a missed page is a missed duplicate)
+# paginated (100 per page is a hard cap, and a missed page is a missed duplicate).
+# No --status: the default already returns every non-canceled subscription,
+# including unpaid and paused ones that still hold the org.
 addr=0x0000000000000000000000000000000000000000
-for st in active trialing past_due incomplete; do
-  after=()
-  while :; do
-    page="$($sj subscriptions list --status $st --limit 100 "${after[@]}")"
-    printf '%s\n' "$page"
-    [[ "$(jq -r .has_more <<<"$page")" == true ]] || break
-    after=(--starting-after "$(jq -r '.data[-1].id' <<<"$page")")
-  done
-done | jq -s --arg a "$addr" '[.[].data[] | select((.metadata.address // "" | ascii_downcase) == ($a | ascii_downcase)) | {id, status, customer}]'
+after=()
+while :; do
+  page="$($sj subscriptions list --limit 100 "${after[@]}")"
+  printf '%s\n' "$page"
+  [[ "$(jq -r .has_more <<<"$page")" == true ]] || break
+  after=(--starting-after "$(jq -r '.data[-1].id' <<<"$page")")
+done | jq -s --arg a "$addr" '[.[].data[] | select(.status != "incomplete_expired") | select((.metadata.address // "" | ascii_downcase) == ($a | ascii_downcase)) | {id, status, customer}]'
 
 # customer's other subscriptions
 $sj subscriptions list --customer cus_xxx | jq '[.data[] | {id, status, product: .items.data[0].price.product}]'
@@ -75,8 +80,11 @@ $sj subscriptions list --customer cus_xxx | jq '[.data[] | {id, status, product:
 # existing coupons that could fit (valid, matching discount, redemptions left)
 $sj coupons list --limit 100 | jq '[.data[] | select(.valid) | {id, name, percent_off, amount_off, currency, duration, duration_in_months, redeemed: .times_redeemed, max: .max_redemptions}]'
 
-# a promotion code the user named
-$sj promotion_codes list --active --code SOMECODE | jq '.data[] | {id, code, coupon: .coupon.id, percent_off: .coupon.percent_off}'
+# a promotion code the user named. Since API 2025-09-30.clover the coupon sits
+# at .promotion.coupon as a bare id; older versions embed it at .coupon.
+$sj promotion_codes list --active --code SOMECODE \
+  | jq '.data[] | {id, code, coupon: (.promotion.coupon // .coupon | if type == "object" then .id else . end)}'
+# then `coupons retrieve <coupon>` for its percent/amount and duration
 
 # new single-use coupon (only when nothing fits)
 $sj coupons create -d percent_off=100 -d duration=forever -d max_redemptions=1 \
@@ -151,9 +159,13 @@ $sj subscriptions retrieve sub_xxx -d "expand[0]=discounts" -d "expand[1]=latest
   id, status, customer, collection_method, days_until_due, metadata,
   price: .items.data[0].price.id, amount: .items.data[0].price.unit_amount, currency,
   period_end: (.items.data[0].current_period_end | todate),
-  discount: (.discounts[0] | if . then {coupon: .coupon.id, percent_off: .coupon.percent_off, amount_off: .coupon.amount_off, duration: .coupon.duration, redeemed: "\(.coupon.times_redeemed)/\(.coupon.max_redemptions)"} else null end),
+  discount: (.discounts[0] | if . then {id, coupon: (.source.coupon // .coupon | if type == "object" then .id else . end)} else null end),
   invoice: (.latest_invoice | {id, status, total, amount_paid, hosted_invoice_url})
 }'
+
+# the Discount row: since API 2025-09-30.clover a discount no longer embeds its
+# coupon (it is a bare id at .source.coupon), so read the coupon itself
+$sj coupons retrieve COUPONID | jq '{id, percent_off, amount_off, currency, duration, duration_in_months, redeemed: "\(.times_redeemed)/\(.max_redemptions)"}'
 ```
 
 ## Undo (only if the user asks)
