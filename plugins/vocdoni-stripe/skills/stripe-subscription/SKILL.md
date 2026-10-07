@@ -100,6 +100,9 @@ single `AskUserQuestion` call (one question per missing item):
   and `payment_methods list --customer` (together they decide the collection
   default: a card that is attached but not the customer's default is only
   charged if you pass it as the subscription's `default_payment_method`).
+  A customer metadata `address` pointing to another org is not a blocker and
+  not a sign of the wrong customer (one customer may own several orgs'
+  subscriptions); note it in the Phase 3 table and leave it untouched.
 - **Product and price**: search by name, then filter to the exact name because
   search is a substring match and `Custom - someone@…` copies would otherwise
   win. Then `prices list --product <id> --active` and pick the recurring price
@@ -158,6 +161,8 @@ change, re-render, ask again. Never proceed on silence or an implicit yes.
 | Org plan change    | Integrator Free → Professional (not integrator)   |
 | Price              | price_xxx · yearly · 1 890,00 EUR                 |
 | metadata.address   | 0x0000000000000000000000000000000000000000        |
+| Customer address   | 0x… (another org, left untouched)  (or: empty)    |
+| Org billing email  | becomes client@example.org (the customer email)   |
 | --- not defined (defaults) ---                                          |
 | Collection         | send_invoice, due in 30 days  (no card on file)   |
 | Discount           | none                                              |
@@ -198,7 +203,7 @@ What each optional row means and its alternatives:
 - **Scheduled cancel**: `cancel_at` or `cancel_at_period_end`.
 - **Description / extra metadata**: `description`, extra `metadata[...]`.
   Never add customer metadata; the backend writes the customer's `address`
-  itself and errors if it is already there.
+  itself when it is empty and leaves an existing one alone.
 
 ## Phase 4: execute
 

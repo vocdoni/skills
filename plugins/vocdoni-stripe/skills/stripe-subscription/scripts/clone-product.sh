@@ -31,7 +31,7 @@
 #    default price's metadata, and a per-customer copy must never become the
 #    catalog default.
 #  - customer metadata is not touched: the backend writes the customer's
-#    `address` itself and errors if it is already set.
+#    `address` itself when it is empty.
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -71,16 +71,28 @@ staging alike.
 
 ## Customers
 
-After saving the org, the handler updates the **customer** metadata `address`
-itself, and returns an error if the customer already has any `address` set
-(`webhook.go`, "customer metadata address mismatch"). Two consequences:
+The subscription metadata `address` is the only link between a subscription
+and an org. The customer's metadata `address` is never read to route a
+subscription; one Stripe customer may own subscriptions for several orgs.
 
-- do not set customer metadata `address` by hand before creating the
-  subscription;
-- known backend bug: once the first event has written the customer address,
-  every later `customer.subscription.updated` for that customer errors after
-  the org was already saved. Harmless for data, noisy in webhook logs. Out of
-  scope for this skill; mention it if the user wonders about failing webhooks.
+After saving the org, the handler stamps the **customer** metadata `address`
+with the org address, but only when it is empty. What happens when it is
+already set depends on the backend version:
+
+- `main` (since dd58581, #704; not in a release tag yet): it logs
+  "customer metadata address mismatch" if the value differs and carries on.
+  The webhook succeeds and the existing value is left untouched.
+- v3.1.2 and older: it returns an error when the customer has any `address`,
+  even the same one. The org was already saved, so the data is correct, but
+  Stripe gets a 500 and retries the event. Noisy in webhook logs, harmless
+  for data; mention it if the user wonders about failing webhooks.
+
+Either way, do not set customer metadata `address` by hand, before or after
+creating the subscription, and do not treat an existing value pointing to
+another org as a sign of the wrong customer.
+
+The org's subscription `Email` is always overwritten with the Stripe customer
+email, so a customer email that differs from the org manager's replaces it.
 
 ## How a new product reaches the backend
 
