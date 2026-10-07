@@ -20,7 +20,7 @@
       "name": "vocdoni-stripe",
       "source": "./plugins/vocdoni-stripe",
       "description": "Stripe operations for the Vocdoni SaaS: create subscriptions for existing customers with the org-address metadata the backend needs, clone per-customer Custom / Integrator Starter plan products, handle discounts and payment collection, always confirming before writing. Includes an environment-guarding Stripe CLI wrapper and a verified backend contract reference.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "category": "engineering",
       "tags": ["vocdoni", "stripe", "billing", "subscriptions", "saas", "stripe-cli"],
       "license": "AGPL-3.0-or-later",
