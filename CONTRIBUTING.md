@@ -148,11 +148,33 @@ Restart your Claude Code session to pick up changes when not using `--symlink`.
 
 ## Releasing
 
-Releases happen from `main`:
+There are two channels, and they update differently:
 
-1. Bump the relevant `version` field(s):
-   - `package.json` (the npx CLI).
-   - The plugin you changed: `plugins/<plugin>/.claude-plugin/plugin.json` and the matching entry in `.claude-plugin/marketplace.json`.
-2. Tag the commit (`git tag vX.Y.Z && git push --tags`).
-3. Publish to npm: `npm publish --access public`.
-4. Marketplace consumers see the new version on next `claude plugin marketplace update`.
+- **Claude Code marketplace.** Users install from this repo's `main` branch. An installed plugin updates only when its `version` changes, so bump the plugin you changed in its `plugins/<plugin>/.claude-plugin/plugin.json` **and** in its `.claude-plugin/marketplace.json` entry, in the same PR. Merging to `main` is the release; users get it on their next `claude plugin marketplace update` (or automatically, if they enabled auto-update).
+- **npm (`npx @vocdoni/skills`).** The package bundles every local plugin and the CLI, so it needs its own release whenever you want npx users to get changes.
+
+To publish to npm:
+
+1. In a PR, bump `version` in `package.json` (plus any plugin versions, as above), then merge it to `main`.
+2. Create a GitHub release on `main` tagged `v<package.json version>`:
+
+   ```sh
+   gh release create v0.2.0 --target main --generate-notes
+   ```
+
+   Mark it as a pre-release (`--prerelease`) to publish under the npm `next` dist-tag instead of `latest`.
+3. The [Release workflow](./.github/workflows/release.yml) runs on the published release. It checks the tag against `package.json`, checks that each `plugin.json` agrees with its marketplace entry and that every `SKILL.md` has a valid name and description, then runs `npm publish`. A version already on npm is skipped, so re-running the workflow is safe.
+
+Run the same checks locally before you release:
+
+```sh
+node .github/scripts/check-release.mjs v0.2.0
+```
+
+### One-time npm setup
+
+The workflow publishes with npm [trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC), so there is no npm token in the repo. npm only lets you add a trusted publisher to a package that already exists, so the very first version is published by hand:
+
+1. A member of the `@vocdoni` npm org publishes the first version from a clean checkout of `main`: `npm publish --access public`.
+2. On npmjs.com, open the package's **Settings → Trusted publishing**, choose **GitHub Actions** and enter organization `vocdoni`, repository `skills`, workflow filename `release.yml`. Allow it to publish with `npm publish`.
+3. Publish the next version through a GitHub release. A new trusted publisher must complete a publish within 2 days, or it has to be created again.

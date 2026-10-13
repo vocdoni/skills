@@ -93,6 +93,6 @@ npx vitest run test/path-safety.test.ts   # single test file
 
 ## Releasing
 
-Bump `version` in lockstep across the three places it appears: `package.json` (CLI), the changed plugin's `plugin.json`, and that plugin's entry in `.claude-plugin/marketplace.json`. Then tag (`vX.Y.Z`) and `npm publish --access public`.
+A changed plugin's `version` is bumped in lockstep in its `plugin.json` and its `.claude-plugin/marketplace.json` entry; marketplace users get it when it merges to `main`. npm is a separate channel: bump `package.json`, merge, then publish a GitHub release tagged `v<package.json version>`. `.github/workflows/release.yml` runs `.github/scripts/check-release.mjs` (tag vs `package.json`, `plugin.json` vs marketplace entry, SKILL.md name and description) and publishes with npm trusted publishing (OIDC, no token); a pre-release goes to the `next` dist-tag. Never run `npm publish` by hand except for the one-time bootstrap described in CONTRIBUTING.md.
 
 **Remote plugins are the exception: they declare no `version` in their marketplace entry.** Their `plugin.json` lives in another repo, so a version here could only ever drift — and Claude Code [uses the `plugin.json` value without warning](https://code.claude.com/docs/en/plugin-marketplaces), so a stale entry silently masks it. `version` is optional in a marketplace entry; omitting it leaves the remote `plugin.json` as the single source of truth, and it is that field (not this file) which decides whether an installed user gets the update.

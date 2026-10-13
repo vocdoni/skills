@@ -1,0 +1,104 @@
+name: Release
+
+## Publishing a GitHub release tagged v<package.json version> publishes @vocdoni/skills
+## to npm from that tag. A release marked as pre-release goes to the `next` dist-tag,
+## so `npx @vocdoni/skills` keeps resolving to the latest stable version.
+##
+## Before publishing, .github/scripts/check-release.mjs checks that the tag matches
+## package.json, that every plugin.json agrees with its marketplace.json entry, and
+## that every SKILL.md has a valid name and description. A version already on npm is
+## not published again, so re-running the workflow is safe.
+##
+## npm uses trusted publishing (OIDC), so there is no npm token to rotate. The npm
+## trusted publisher for @vocdoni/skills must point to this file: release.yml.
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+## A publish must never be cancelled halfway; later releases wait their turn.
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
+
+jobs:
+  publish_npm:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   ## required for npm trusted publishing (OIDC) and provenance
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      PRERELEASE: ${{ github.event.release.prerelease }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      ## Trusted publishing needs npm >= 11.5.1 and node >= 22.14.0
+      - name: Setup NodeJS
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+          registry-url: https://registry.npmjs.org
+
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Check the release
+        run: node .github/scripts/check-release.mjs "$RELEASE_TAG"
+
+      - name: Get package info
+        id: pkg
+        run: |
+          NAME=$(jq -r .name package.json)
+          VERSION=$(jq -r .version package.json)
+          ## Pre-release versions (1.2.3-rc.1) and pre-release GitHub releases go to
+          ## `next`, never to `latest`
+          if [[ "$PRERELEASE" == "true" || "$VERSION" == *-* ]]; then
+            DIST_TAG=next
+          else
+            DIST_TAG=latest
+          fi
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+            PUBLISHED=yes
+          else
+            PUBLISHED=not
+          fi
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "dist_tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
+          echo "published=$PUBLISHED" >> "$GITHUB_OUTPUT"
+          echo "Package: $NAME@$VERSION  dist-tag: $DIST_TAG  already published: $PUBLISHED"
+
+      - name: Preview the package contents
+        run: npm pack --dry-run
+
+      - name: Publish NPM ${{ steps.pkg.outputs.version }}
+        if: ${{ steps.pkg.outputs.published == 'not' }}
+        env:
+          DIST_TAG: ${{ steps.pkg.outputs.dist_tag }}
+        run: npm publish --access public --tag "$DIST_TAG"
+
+      - name: Summary
+        if: always()
+        env:
+          NAME: ${{ steps.pkg.outputs.name }}
+          VERSION: ${{ steps.pkg.outputs.version }}
+          DIST_TAG: ${{ steps.pkg.outputs.dist_tag }}
+          PUBLISHED: ${{ steps.pkg.outputs.published }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          if [[ "$JOB_STATUS" != "success" ]]; then
+            echo "Error: $RELEASE_TAG was not published to npm. See the job log." >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "$PUBLISHED" == "yes" ]]; then
+            echo "$NAME@$VERSION was already on npm; nothing was published." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Published $NAME@$VERSION (dist-tag $DIST_TAG): https://www.npmjs.com/package/$NAME/v/$VERSION" >> "$GITHUB_STEP_SUMMARY"
+          fi
