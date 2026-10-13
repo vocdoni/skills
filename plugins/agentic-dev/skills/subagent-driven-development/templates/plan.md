@@ -27,7 +27,7 @@ Repos and branches: <repo path> → <branch> (base <sha>)   (one line per repo)
 ## Tasks
 
 ### Task 1: <title>
-Model: haiku | sonnet | opus   Repo: <path>   Files: <exact paths>
+Model: fast | standard | strong   Repo: <path>   Files: <exact paths>
 Goal: <one sentence, which acceptance criterion it serves>
 
 Step 1: write the failing test

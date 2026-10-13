@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-description: Runs engineering work that needs a plan as a controlled delivery. The main session sizes the work, designs it with the user, delegates implementation to subagents task by task and reviews every diff. Fable audits each spec, plan and branch before merge. Load it proactively, without being asked, when a request implies multi-step code changes that will be merged. That includes requests phrased as a question or a wish ("can X do Y?", "it would be nice to have...") whenever your answer would propose a design. Examples are implementing a feature, refactoring or porting a module, changing a protocol, API, wire format or schema, migrating data, working across repos, deploying or releasing, and benchmark-driven speed-ups. Also load it when the user mentions a spec, plan, subagents, an audit or a ledger, asks to resume delivery work, or the repo has a .delivery/ folder. Load it before proposing a design or writing code. Skip it for questions about how code works, read-only investigation and fixes of one or two files.
+description: Runs engineering work that needs a plan as a controlled delivery. The main session sizes the work, designs it with the user, delegates implementation to subagents and reviews every diff. An auditor model reviews each spec, plan and branch before merge. Load it proactively, without being asked, when a request implies multi-step code changes that will be merged. That includes requests phrased as a question or a wish ("can X do Y?", "it would be nice to have...") whenever your answer would propose a design. Examples are implementing a feature, refactoring or porting a module, changing a protocol, API, wire format or schema, migrating data, working across repos, deploying or releasing, and benchmark-driven speed-ups. Also load it when the user mentions a spec, plan, subagents, an audit or a ledger, asks to resume delivery work, or the repo has a .delivery/ folder. Load it before proposing a design or writing code. Skip it for questions about how code works, read-only investigation and fixes of one or two files.
 ---
 
 # Subagent-driven development
@@ -14,7 +14,7 @@ The pattern has three parts. Each fixes a known way long agentic work goes wrong
 
 - **Delegating implementation** keeps your context free for judgement. A controller that writes
   code itself loses the overview after a few tasks and starts missing things in review.
-- **An independent strict auditor (Fable)** catches what the author cannot see: specs that don't
+- **An independent strict auditor**, running on the strongest model available, catches what the author cannot see: specs that don't
   match the code, plans whose tasks conflict, branches that drifted from the spec. Audits happen
   at the points where a mistake is cheapest to fix: before the plan, before execution and before
   merge.
@@ -46,19 +46,22 @@ continue.
 
 ## 2. Roles and models
 
-Always set the Agent tool's `model` explicitly. If you leave it out, the subagent inherits the
-session's expensive model. This table is the single source for model choices; the reference
-files refer to roles.
+This skill names **model roles**, not models, so it keeps working as new models ship.
+[references/models.md](references/models.md) maps each model role to today's default, says how
+to prefer a newer version, and how to pick a model with similar strengths when the default is
+not available. Resolve the four model roles in phase 1 and write them on the ledger's `Models:`
+line. Every dispatch then sets the Agent tool's `model` from that line, explicitly. If you leave
+`model` out, the subagent inherits the session's model, usually the most expensive one.
 
-| Role | `model` | Agent type | Use for |
+| Role | Model role | Agent type | Use for |
 |---|---|---|---|
-| Controller | main session | — | design with the owner, sizing, rulings, reviewing every diff, running gates, reports |
-| Auditor and consultant | `fable` | general-purpose | spec audits, plan pre-flight audits, gate audits, hard design questions |
-| Plan drafter | `opus` | general-purpose | large implementation plans written against the real code |
-| Hard fixer | `opus` | general-purpose | fixes after a Critical finding, subtle concurrency, soundness or security fixes, fix rounds 4–5 |
-| Implementer | `sonnet` | general-purpose | one plan task at a time, multi-file integration |
-| Mechanical implementer | `haiku` | general-purpose | fully specified code to transcribe, vendoring, single-file edits, renames |
-| Code mapper | `sonnet` | Explore | read-only maps of the code with `file:line`, before designing or planning |
+| Controller | the session's own model | — | design with the owner, sizing, rulings, reviewing every diff, running gates, reports |
+| Auditor and consultant | auditor model | general-purpose | spec audits, plan pre-flight audits, gate audits, hard design questions |
+| Plan drafter | strong model | general-purpose | large implementation plans written against the real code |
+| Hard fixer | strong model | general-purpose | fixes after a Critical finding, subtle concurrency, soundness or security fixes, fix rounds 4–5 |
+| Implementer | standard model | general-purpose | one plan task at a time, multi-file integration |
+| Mechanical implementer | fast model | general-purpose | fully specified code to transcribe, vendoring, single-file edits, renames |
+| Code mapper | standard model | Explore | read-only maps of the code with `file:line`, before designing or planning |
 
 Use a more specialised agent type when one is installed and fits the job, such as a
 language-specific reviewer or a cheaper worker for mechanical edits. Keep the same role
@@ -73,14 +76,14 @@ work from your review.
 go. Phases marked † are skipped for Bounded work.
 
 ```
-- [ ] 1. Explore and brainstorm; class stated to the owner
+- [ ] 1. Explore and brainstorm; class stated to the owner; model roles resolved
 - [ ] 2. Spec written and committed (Bounded: short spec inline at the top of the plan)
-- [ ] 3. Fable spec audit folded in; owner approved the spec †
+- [ ] 3. Spec audit folded in; owner approved the spec †
 - [ ] 4. Plan drafted against the real code and committed; feature branch(es) created from the recorded base
-- [ ] 5. Fable pre-flight audit turned into rulings †
+- [ ] 5. Pre-flight audit turned into rulings †
 - [ ] 6. Owner reviewed the plan
 - [ ] 7. Tasks executed and each one reviewed by the controller
-- [ ] 8. Full suite green; Fable gate audit; fixes re-reviewed
+- [ ] 8. Full suite green; gate audit; fixes re-reviewed
 - [ ] 9. Owner OK; merged; released
 ```
 
@@ -88,7 +91,9 @@ go. Phases marked † are skipped for Bounded work.
 `file:line` maps. An Explore map tells you *where* code is, not *what* it does; read the code
 that matters yourself. Then work out the design with the owner. Ask one question at a time with
 AskUserQuestion, as multiple choice with your recommended option first. Show numbers (sizes,
-latencies, costs, line counts) before asking the owner to choose.
+latencies, costs, line counts) before asking the owner to choose. Resolve the model roles with
+[references/models.md](references/models.md); once the workspace exists, write them on the
+ledger's `Models:` line.
 
 **2. Spec.** Write `docs/specs/YYYY-MM-DD-<topic>-design.md`, or use the place the repo already
 keeps design docs. Start from [templates/spec.md](templates/spec.md). The spec states what must
@@ -97,7 +102,7 @@ be true when the work is done, not how to code it. Commit it, then run `init-wor
 Bounded work, the short spec goes at the top of the plan and you run `init-workspace.sh` on the
 plan instead.
 
-**3. Spec audit †.** Dispatch Fable with the spec-audit prompt in
+**3. Spec audit †.** Dispatch the auditor with the spec-audit prompt in
 [references/audits.md](references/audits.md). Fold every accepted finding into the spec and
 commit. Then ask the owner to approve the written spec. **Do not start a plan before that
 approval.** A plan built on an unapproved spec gets rewritten.
@@ -115,7 +120,7 @@ constraints and the riskiest tasks yourself, then commit the plan. Then create t
 branch in every repo from the base commit named in the plan header (`git switch -c <branch>
 <base>`), and record the base SHAs in the ledger header.
 
-**5. Pre-flight audit †.** Dispatch Fable with the pre-flight prompt. It returns a conflict table
+**5. Pre-flight audit †.** Dispatch the auditor with the pre-flight prompt. It returns a conflict table
 (task pairs that share files or interfaces, and whether each task is consistent with itself)
 plus findings, each with a verbatim correction. Turn every finding into a **ruling** in the
 ledger, assigned to the task that owns the code. `task-brief.sh` then pastes the ruling into that
@@ -130,7 +135,7 @@ unless they touch disjoint repos or files (section 8). Review every diff yoursel
 For very large tasks you may first send the diff to a task-reviewer, but you still read the
 security-relevant parts yourself. Fix rounds follow the escalation ladder in `dispatch.md`.
 
-**8. Gate.** Run the full test suite of every repo touched yourself. Then dispatch Fable's
+**8. Gate.** Run the full test suite of every repo touched yourself. Then dispatch the auditor's
 whole-branch gate audit. Send all the gate fixes as one fix dispatch (to the Hard fixer if any
 finding is Critical) and re-review them. If the fixer flags a load-bearing residual, it gets its
 own follow-up round in this session rather than a TODO.
@@ -151,16 +156,16 @@ If the `superpowers` plugin is installed, its brainstorming, writing-plans and
 verification-before-completion skills fit phases 1, 4 and 8. This skill's files, ledger and
 scripts still take precedence.
 
-## 4. Fable is a consultant and auditor
+## 4. The auditor is also your consultant
 
-Use Fable for **judgement**, not for typing code. Besides the three audits, consult it when a
+Use the auditor for **judgement**, not for typing code. Besides the three audits, consult it when a
 design question is hard: competing approaches, a soundness argument, a concurrency model, or a
 failure you can't explain after one honest attempt. The consult prompt is in `audits.md`.
 
-Fable can be wrong. You rule on each finding: accept it, accept it amended, or reject it with
+The auditor can be wrong. You rule on each finding: accept it, accept it amended, or reject it with
 evidence. Record the ruling in the ledger. Rejecting a Critical finding needs concrete
 evidence, such as a test, a `file:line` or a spec clause, and must be mentioned to the owner.
-Audits are read-only: Fable writes its report to the workspace and changes nothing else.
+Audits are read-only: the auditor writes its report to the workspace and changes nothing else.
 
 ## 5. Make rulings instead of stalling
 
@@ -264,7 +269,8 @@ formats and the recovery procedure are in [references/ledger.md](references/ledg
 
 | File | Read it when |
 |---|---|
-| [references/audits.md](references/audits.md) | dispatching any Fable audit or consult, or triaging its findings |
+| [references/models.md](references/models.md) | resolving the model roles in phase 1, or when a model is unavailable or a newer one has shipped |
+| [references/audits.md](references/audits.md) | dispatching any audit or consult, or triaging its findings |
 | [references/dispatch.md](references/dispatch.md) | writing an implementer, fixer or task-reviewer prompt, or handling a report |
 | [references/ledger.md](references/ledger.md) | starting the workspace, writing rulings, or recovering after compaction |
 | [references/work-types.md](references/work-types.md) | the work is a protocol or format change, migration, multi-repo change, deployment, benchmark or security-sensitive change |

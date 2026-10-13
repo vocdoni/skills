@@ -49,17 +49,18 @@ else
 Class: ${class:-<spike|bounded|architectural>}   Branch: ${branch:-<detached>}
 Repos: $root @ $base
 Budget: <dispatches> dispatches / <audits> audits   Used: 0 / 0
+Models: auditor=<value>  strong=<value>  standard=<value>  fast=<value>   (resolve with references/models.md)
 Created: $(date +%F)
 
 ## Lifecycle
-- [ ] 1. Explore and brainstorm; class stated to the owner
+- [ ] 1. Explore and brainstorm; class stated to the owner; model roles resolved
 - [ ] 2. Spec written and committed (Bounded: short spec inline at the top of the plan)
-- [ ] 3. Fable spec audit folded in; owner approved the spec †
+- [ ] 3. Spec audit folded in; owner approved the spec †
 - [ ] 4. Plan drafted against the real code and committed; feature branch(es) created from the recorded base
-- [ ] 5. Fable pre-flight audit turned into rulings †
+- [ ] 5. Pre-flight audit turned into rulings †
 - [ ] 6. Owner reviewed the plan
 - [ ] 7. Tasks executed and each one reviewed by the controller
-- [ ] 8. Full suite green; Fable gate audit; fixes re-reviewed
+- [ ] 8. Full suite green; gate audit; fixes re-reviewed
 - [ ] 9. Owner OK; merged; released
 († = skipped for Bounded work)
 

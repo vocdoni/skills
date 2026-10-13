@@ -74,9 +74,9 @@ Covers auth, crypto, key handling, nonces or replay protection, sandboxing, and 
 untrusted input.
 
 - The class is at least Architectural, whatever the size.
-- Implementers on these tasks use the Hard fixer model (SKILL.md section 2). The controller reads
+- Implementers on these tasks use the strong model ([models.md](models.md)). The controller reads
   the final code **in full**.
 - The spec states the threat model in a few lines: who the attacker is, what they control, and
   what must hold.
 - Tests include negative cases: replayed, malformed, oversized, expired or wrongly signed input.
-- Ask Fable directly in the gate audit to try to break the change.
+- Ask the auditor directly in the gate audit to try to break the change.

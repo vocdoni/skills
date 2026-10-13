@@ -1,7 +1,7 @@
 # Dispatching implementers, fixers and reviewers
 
 ## Contents
-- Choosing the model for a task
+- Choosing the model role for a task
 - Implementer prompt contract
 - Project constraints block
 - Report contract
@@ -9,18 +9,19 @@
 - Fix rounds and escalation ladder
 - Task-reviewer prompt (large tasks)
 
-## Choosing the model for a task
+## Choosing the model role for a task
 
-This applies the roles table in SKILL.md section 2 to a single task.
+This applies the roles table in SKILL.md section 2 to a single task. The ledger's `Models:` line
+turns the model role into the Agent tool's `model` value ([models.md](models.md)).
 
-| The task is… | `model` |
+| The task is… | Model role |
 |---|---|
-| fully specified code to transcribe, vendoring, a rename, a single-file edit | `haiku` |
-| a normal plan task: multi-file, some integration judgement | `sonnet` |
-| concurrency, soundness, cryptography, a security path, or a fix after a Critical finding | `opus` |
+| fully specified code to transcribe, vendoring, a rename, a single-file edit | fast model |
+| a normal plan task: multi-file, some integration judgement | standard model |
+| concurrency, soundness, cryptography, a security path, or a fix after a Critical finding | strong model |
 
-When in doubt, pick the cheaper model and let the escalation ladder catch failures. The
-exception is security-sensitive code, which starts at `opus`.
+When in doubt, pick the cheaper model role and let the escalation ladder catch failures. The
+exception is security-sensitive code, which starts at the strong model.
 
 ## Implementer prompt contract
 
@@ -112,8 +113,8 @@ Commits: <sha> <title>, ...
 | Round | Who | How |
 |---|---|---|
 | 1–3 | the same implementer | SendMessage with the findings: file:line, what is wrong, the expected behaviour. It keeps its context. |
-| 4–5 | a fresh implementer on a stronger model (`haiku`→`sonnet`→`opus`) | New dispatch: the brief, the current diff, a summary of the failed rounds and what was tried. |
-| after 5 | controller | Stop and rethink: the task is probably mis-specified. Consult Fable, re-scope the task with a ruling, or ask the owner if the spec is wrong. |
+| 4–5 | a fresh implementer on the next model role up that resolves to a different model (fast → standard → strong) | New dispatch: the brief, the current diff, a summary of the failed rounds and what was tried. |
+| after 5 | controller | Stop and rethink: the task is probably mis-specified. Consult the auditor, re-scope the task with a ruling, or ask the owner if the spec is wrong. |
 
 Each round's findings must be specific. "Tests fail" is not a finding. Give the failing test,
 its assertion and your diagnosis.

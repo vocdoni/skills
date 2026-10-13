@@ -1,7 +1,7 @@
-# Fable audits and consults
+# Audits and consults
 
 ## Contents
-- Ground rules for every Fable dispatch
+- Ground rules for every audit dispatch
 - Finding format and severity scale
 - A. Spec audit
 - B. Plan pre-flight audit
@@ -9,22 +9,24 @@
 - D. Consult on a hard question
 - Triaging findings
 
-## Ground rules for every Fable dispatch
+## Ground rules for every audit dispatch
 
-- `model: "fable"`, agent type `general-purpose`. The result arrives as a notification. While it
-  runs, touch nothing under audit.
-- If `fable` is unavailable, use the Hard fixer model with the same prompt and record
-  `Audit <kind>: run on <model> (fable unavailable)` in the ledger.
-- Give Fable **paths, not pastes**. It reads the spec, plan, code and diffs itself, so it audits
+- `model`: the auditor model from the ledger's `Models:` line ([models.md](models.md)), agent type
+  `general-purpose`. The result arrives as a notification. While it runs, touch nothing under
+  audit.
+- If the auditor model is unavailable, pick a substitute as [models.md](models.md) describes, send
+  it the same prompt and record `Audit <kind>: run on <model> (auditor model unavailable)` in the
+  ledger. Update the `Models:` line as [models.md](models.md) says.
+- Give the auditor **paths, not pastes**. It reads the spec, plan, code and diffs itself, so it audits
   what is really there and not your summary of it.
 - Say what is already decided and must not be relitigated, such as owner rulings and approved
   spec sections. Otherwise the audit spends its effort on settled questions.
-- Audits are **read-only**. Fable writes its report to the workspace path you give it and changes
+- Audits are **read-only**. The auditor writes its report to the workspace path you give it and changes
   no other file, makes no commits and runs nothing that alters state. Read-only commands
   (`git log`, `grep`, running existing tests) are fine.
-- Fable does not dispatch subagents.
-- An owner decision is not re-argued. But if following it produces a Critical defect, Fable
-  reports that as a finding titled `Escalation:` with the evidence. You carry it to the owner
+- The auditor does not dispatch subagents.
+- An owner decision is not re-argued. But if following it produces a Critical defect, the
+  auditor reports that as a finding titled `Escalation:` with the evidence. You carry it to the owner
   word for word, and you do not implement around it.
 - The reply is short: the verdict, counts by severity and the report path. The full content goes
   in the file, so your context stays small.
