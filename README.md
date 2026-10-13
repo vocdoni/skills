@@ -19,6 +19,10 @@ claude plugin install pi-subagent@vocdoni   # MCP server + agents — needs Pi (
 
 # Or grab everything in one shot (skill plugins only; pi-subagent is Claude Code-only)
 npx @vocdoni/skills install
+
+# Later, to upgrade (see "Upgrade" below)
+claude plugin marketplace update vocdoni
+claude plugin update agentic-dev@vocdoni   # repeat per installed plugin
 ```
 
 ---
@@ -153,6 +157,51 @@ Skills are plain directories at `plugins/<plugin>/skills/<skill>/`.
 
 - **Manual**: copy or symlink into `~/.claude/skills/` (user) or `<project>/.claude/skills/` (project), or whatever your client reads.
 - **Claude API**: upload `SKILL.md` and its supporting files via the [Skills API][skills-api].
+
+---
+
+## Upgrade
+
+### Claude Code
+
+Third-party marketplaces such as this one do not auto-update by default, so installed plugins stay at the version you installed until you upgrade them:
+
+```sh
+# Refresh the marketplace listing
+claude plugin marketplace update vocdoni
+
+# Update each plugin you installed
+claude plugin update vocdoni-sdk@vocdoni
+claude plugin update davinci-sdk@vocdoni
+claude plugin update vocdoni-integrator-sdk@vocdoni
+claude plugin update vocdoni-go@vocdoni
+claude plugin update vocdoni-stripe@vocdoni
+claude plugin update agentic-dev@vocdoni
+claude plugin update pi-subagent@vocdoni
+```
+
+Updates apply to new sessions; in a running session, run `/reload-plugins`. Run `claude plugin list` to see which plugins and versions you have.
+
+From inside a session you can do the same with `/plugin`: on the **Marketplaces** tab, select `vocdoni` and choose **Update marketplace** to update every plugin you installed from it, or **Enable auto-update** to have Claude Code update them in the background at the start of each session.
+
+A plugin only updates when its `version` changes, so an unreleased change on `main` does not reach installed users until the plugin is released (see [Releasing](./CONTRIBUTING.md#releasing)).
+
+### npx
+
+Re-run the install against the latest package. `--force` overwrites the skill directories that are already there:
+
+```sh
+npx @vocdoni/skills@latest install --force                        # everything
+npx @vocdoni/skills@latest install --plugin agentic-dev --force   # one plugin
+```
+
+Pin `@latest`, or npx may reuse an older cached copy of the CLI. Remote plugins such as `vocdoni-integrator-sdk` are re-fetched on every run unless you pass `--offline`.
+
+Installed with `--symlink` from a checkout? `git pull` in that checkout is enough; the links already point at the updated files.
+
+### Manual
+
+Copy the skill directories again over the old ones, or `git pull` if you symlinked them.
 
 ---
 
