@@ -10,10 +10,14 @@
     "plugins",
     ".claude-plugin",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {
-    "lint": "node bin/install.js list"
+    "lint": "node bin/install.js list",
+    "changeset": "changeset",
+    "version-packages": "changeset version && npm install --package-lock-only",
+    "release": "node .github/scripts/check-release.mjs && changeset publish"
   },
   "keywords": [
     "claude",
@@ -38,5 +42,9 @@
   "license": "AGPL-3.0-or-later",
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^1.0.1",
+    "@changesets/cli": "^3.0.3"
   }
 }

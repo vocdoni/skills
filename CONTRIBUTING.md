@@ -150,31 +150,42 @@ Restart your Claude Code session to pick up changes when not using `--symlink`.
 
 There are two channels, and they update differently:
 
-- **Claude Code marketplace.** Users install from this repo's `main` branch. An installed plugin updates only when its `version` changes, so bump the plugin you changed in its `plugins/<plugin>/.claude-plugin/plugin.json` **and** in its `.claude-plugin/marketplace.json` entry, in the same PR. Merging to `main` is the release; users get it on their next `claude plugin marketplace update` (or automatically, if they enabled auto-update).
-- **npm (`npx @vocdoni/skills`).** The package bundles every local plugin and the CLI, so it needs its own release whenever you want npx users to get changes.
+- **Claude Code marketplace.** Users install from this repo's `main` branch. An installed plugin updates only when its `version` changes, so bump the plugin you changed in its `plugins/<plugin>/.claude-plugin/plugin.json` **and** in its `.claude-plugin/marketplace.json` entry, in the same PR. Merging to `main` is the release. These bumps are manual; Changesets never touches plugins.
+- **npm (`npx @vocdoni/skills`).** The package bundles every local plugin, the CLI and the README. It is versioned with [Changesets](https://github.com/changesets/changesets).
 
-To publish to npm:
+### Adding a changeset
 
-1. In a PR, bump `version` in `package.json` (plus any plugin versions, as above), then merge it to `main`.
-2. Create a GitHub release on `main` tagged `v<package.json version>`:
-
-   ```sh
-   gh release create v0.2.0 --target main --generate-notes
-   ```
-
-   Mark it as a pre-release (`--prerelease`) to publish under the npm `next` dist-tag instead of `latest`.
-3. The [Release workflow](./.github/workflows/release.yml) runs on the published release. It checks the tag against `package.json`, checks that each `plugin.json` agrees with its marketplace entry and that every `SKILL.md` has a valid name and description, then runs `npm publish`. A version already on npm is skipped, so re-running the workflow is safe.
-
-Run the same checks locally before you release:
+Any PR that changes what ships in the npm package (`bin/`, `plugins/`, `.claude-plugin/marketplace.json`, `README.md`) adds a changeset:
 
 ```sh
-node .github/scripts/check-release.mjs v0.2.0
+npx changeset
+```
+
+Select `@vocdoni/skills`, pick `minor` for a new skill or feature and `patch` for a fix, and write one sentence. That sentence becomes the CHANGELOG entry. Commit the generated `.changeset/*.md` with your PR.
+
+### Publishing to npm
+
+The [Release workflow](./.github/workflows/release.yml) runs on every push to `main`:
+
+1. While changesets are pending, it opens or updates a release PR titled `chore(release): version @vocdoni/skills`. That PR bumps `version` in `package.json` and `package-lock.json` and writes `CHANGELOG.md`.
+2. Merge that PR. The workflow runs again with nothing pending, runs `npm run release` (checks the release, then `changeset publish`), and creates a GitHub release and the tag `v<version>`.
+
+A version already on npm is skipped, so re-running the workflow is safe.
+
+To publish a pre-release, run `npx changeset pre enter next` in a PR and merge it. Versions become `x.y.z-next.N` and go to the npm `next` dist-tag, so `npx @vocdoni/skills` keeps resolving to the latest stable. `npx changeset pre exit` returns to stable releases.
+
+Before you open a PR, check the release locally:
+
+```sh
+node .github/scripts/check-release.mjs
+npx changeset status   # exits 1 if shipped files changed without a changeset
 ```
 
 ### One-time npm setup
 
-The workflow publishes with npm [trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC), so there is no npm token in the repo. npm only lets you add a trusted publisher to a package that already exists, so the very first version is published by hand:
+The workflow publishes with npm [trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC), so there is no npm token in the repo. npm only lets you add a trusted publisher to a package that already exists, so the first version is published by hand, before the workflow is first merged to `main`:
 
-1. A member of the `@vocdoni` npm org publishes the first version from a clean checkout of `main`: `npm publish --access public`.
+1. A member of the `@vocdoni` npm org publishes `0.1.0` from a clean checkout of `main`: `npm publish --access public`.
 2. On npmjs.com, open the package's **Settings → Trusted publishing**, choose **GitHub Actions** and enter organization `vocdoni`, repository `skills`, workflow filename `release.yml`. Allow it to publish with `npm publish`.
-3. Publish the next version through a GitHub release. A new trusted publisher must complete a publish within 2 days, or it has to be created again.
+3. On GitHub, open **Settings → Actions → General** and enable **Allow GitHub Actions to create and approve pull requests**. Without it the release PR cannot be opened.
+4. The next version ships when the first release PR is merged. A new trusted publisher must complete a publish within 2 days, or it has to be created again.
