@@ -65,12 +65,13 @@ Constraints:
 - Gated or ignored tests must actually run: check the output for skip lines.
 <project constraints block, see below>
 
-If the brief names a `Patch:` file, apply it first: `git am -3 <patch>`. Run the task's tests.
-If the patch applies cleanly and tests pass, you are done — commit as directed. If the patch
-does not apply or tests fail, adapt the code minimally to make tests pass and record each
-deviation in your report. Rulings in the "Rulings for this task" section override the patch:
-amend the applied code to satisfy the ruling and record the change. If the brief carries no
-patch, follow the task's code as written.
+If the brief names a `Patch:` file, apply it first: `git am -3 <patch>`. `git am` creates the
+task's commit with the drafter's message, so there is no separate commit step. Run the task's
+tests. If they pass, you are done. If the patch does not apply, resolve the conflict and finish
+with `git am --continue`. If tests fail, adapt the code minimally and fold the fix into the same
+commit with `git commit --amend -- <paths>`. Rulings in the "Rulings for this task" section
+override the patch: amend the commit the same way to satisfy the ruling. Record every deviation
+in your report. If the brief carries no patch, follow the task's code as written.
 
 If the brief's code doesn't compile against the real tree, adapt it minimally and record the
 deviation in your report. If an interface that other tasks rely on would have to change, stop
