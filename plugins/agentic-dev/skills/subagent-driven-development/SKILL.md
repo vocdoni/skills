@@ -114,11 +114,16 @@ match, the spec and the plan share one workspace.
 
 The plan has full code for each step, exact commands with expected output, Global Constraints,
 Review Focus, branch names with base commits, and a closing *Merge and release* section. The
-drafter checks every code block in a scratch copy outside the repo, under
-`~/.cache/<project>/scratch/`, never in `/tmp` or the working tree. Read the header, the
-constraints and the riskiest tasks yourself, then commit the plan. Then create the feature
-branch in every repo from the base commit named in the plan header (`git switch -c <branch>
-<base>`), and record the base SHAs in the ledger header.
+drafter's scratch is a git checkout of the plan's base commit: `git worktree add
+~/.cache/<project>/scratch/<topic> <base>` in the main repo, or a clone on the build host when
+builds must run remotely. The drafter runs every code block there, commits once per task with
+the task's commit message, and exports each commit with `git format-patch -1 --stdout >
+<repo>/.delivery/<topic>/patches/task-<N>.patch` into the main checkout. Patches are untracked
+and survive the job. The plan's code must match the patches exactly: the plan is what gets
+reviewed and audited, the patch is what gets applied. Keep the scratch until the delivery
+merges. Read the header, the constraints and the riskiest tasks yourself, then commit the plan.
+Then create the feature branch in every repo from the base commit named in the plan header
+(`git switch -c <branch> <base>`), and record the base SHAs in the ledger header.
 
 **5. Pre-flight audit †.** Dispatch the auditor with the pre-flight prompt. It returns a conflict table
 (task pairs that share files or interfaces, and whether each task is consistent with itself)

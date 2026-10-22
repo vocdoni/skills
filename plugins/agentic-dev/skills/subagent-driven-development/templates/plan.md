@@ -29,6 +29,7 @@ Repos and branches: <repo path> → <branch> (base <sha>)   (one line per repo)
 ### Task 1: <title>
 Model: fast | standard | strong   Repo: <path>   Files: <exact paths>
 Goal: <one sentence, which acceptance criterion it serves>
+Patch: .delivery/<topic>/patches/task-1.patch
 
 Step 1: write the failing test
 ```<lang>
@@ -50,6 +51,9 @@ Step 3: commit
 Interfaces this task provides to later tasks: <names and signatures>
 
 ### Task 2: <title>
+Model: fast | standard | strong   Repo: <path>   Files: <exact paths>
+Goal: <one sentence, which acceptance criterion it serves>
+Patch: .delivery/<topic>/patches/task-2.patch
 ...
 
 ## Merge and release

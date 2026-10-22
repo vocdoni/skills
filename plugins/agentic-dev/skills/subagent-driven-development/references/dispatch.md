@@ -20,6 +20,14 @@ turns the model role into the Agent tool's `model` value ([models.md](models.md)
 | a normal plan task: multi-file, some integration judgement | standard model |
 | concurrency, soundness, cryptography, a security path, or a fix after a Critical finding | strong model |
 
+When a patch file is present in the brief, the model role reflects what the implementer does with
+it, not the task's original complexity:
+
+| Patch situation | Model role |
+|---|---|
+| patch applies cleanly and tests pass | fast model |
+| patch does not apply or tests fail; implementer adapts minimally | standard model |
+
 When in doubt, pick the cheaper model role and let the escalation ladder catch failures. The
 exception is security-sensitive code, which starts at the strong model.
 
@@ -57,9 +65,20 @@ Constraints:
 - Gated or ignored tests must actually run: check the output for skip lines.
 <project constraints block, see below>
 
+If the brief names a `Patch:` file, apply it first: `git am -3 <patch>`. Run the task's tests.
+If the patch applies cleanly and tests pass, you are done — commit as directed. If the patch
+does not apply or tests fail, adapt the code minimally to make tests pass and record each
+deviation in your report. Rulings in the "Rulings for this task" section override the patch:
+amend the applied code to satisfy the ruling and record the change. If the brief carries no
+patch, follow the task's code as written.
+
 If the brief's code doesn't compile against the real tree, adapt it minimally and record the
 deviation in your report. If an interface that other tasks rely on would have to change, stop
 and reply NEEDS_CONTEXT with the reason. Do not redesign.
+
+When a patch from an earlier task was modified during fix rounds after that task closed, later
+patches may not apply cleanly. `git am -3` resolves most such conflicts; when it cannot, adapt
+as above and report the deviation so the controller can update the plan.
 
 You do not dispatch subagents.
 

@@ -53,11 +53,13 @@ focus=$(section h2 "Review Focus")
 # Accept "(Task N)", "(global)", comma lists such as "(Task 1, Task 3)", and any case.
 rulings=$(grep -iE "^Ruling R[0-9]+ \(([^)]*[^0-9])?(Task $n|global)([^0-9][^)]*)?\)" "$ledger" || true)
 plan_sha=$(git -C "$root" log -1 --format=%h -- "$plan" 2>/dev/null || true)
+patch_file="$ws/patches/task-$n.patch"
 
 out="$ws/task-$n-brief.md"
 {
   echo "# Brief: Task $n"
   echo "Plan: ${plan#"$root"/} @ ${plan_sha:-uncommitted}"
+  if [[ -f $patch_file ]]; then echo "Patch: $patch_file"; fi
   echo "Generated: $(date '+%F %H:%M')  (do not edit; regenerate with task-brief.sh)"
   echo
   echo "This brief is your single source of requirements. Rulings override the task text"

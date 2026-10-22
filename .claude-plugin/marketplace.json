@@ -40,7 +40,7 @@
       "name": "agentic-dev",
       "source": "./plugins/agentic-dev",
       "description": "Run non-trivial engineering work as a controlled delivery: sized work, audited spec and plan, subagents implementing task by task, every diff reviewed, a strict gate audit before merge, and releases only on the owner's OK. A SessionStart hook makes the model load it without being asked.",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "category": "engineering",
       "tags": ["subagents", "orchestration", "planning", "code-review", "audit", "workflow"],
       "license": "AGPL-3.0-or-later",
