@@ -1,0 +1,25 @@
+{
+  "name": "vocdoni-ui-style",
+  "version": "0.1.0",
+  "description": "Build UIs with Vocdoni's look and feel and UX flows, in its two visual modes: editorial (vocdoni.io: cream surfaces, warm ink, Fraunces serif headings, green accent, yellow eyebrow dot) and product (vocdoni-app: white, Inter at light weights, monochrome or white-label accent). Ships design tokens for Tailwind v4 + shadcn/ui, Chakra UI v3 and plain CSS, React components, logo files, reference screenshots, runnable HTML examples (landing page, voting flow, dashboard, sign-in, vote builder, transactional email), worked React recipes, step-by-step UX flows for voting, vote building, onboarding and member management, specs for docs sites and result PDFs, copy rules and a brand style checker.",
+  "author": {
+    "name": "Vocdoni",
+    "url": "https://vocdoni.io"
+  },
+  "homepage": "https://github.com/vocdoni/skills",
+  "repository": "https://github.com/vocdoni/skills",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "claude-code",
+    "skills",
+    "vocdoni",
+    "design-system",
+    "ui",
+    "ux",
+    "brand",
+    "tailwind",
+    "shadcn",
+    "chakra-ui",
+    "voting"
+  ]
+}

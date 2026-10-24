@@ -1,0 +1,358 @@
+<!doctype html>
+<!--
+  Editorial mode reference page (vocdoni.io look), plain HTML + assets/tokens/editorial.css.
+  Shows, top to bottom: sticky glass navbar, hero (serif headline, lede with a bold lead sentence,
+  dark CTA + quiet secondary, "Built for" chips, three product-state cards on a dashed timeline),
+  trust band, eyebrow + panel grid, product washes, comparison ledger, FAQ, closing CTA, footer.
+  Open it directly in a browser. Icons are lucide paths in an inline sprite.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vocdoni - Secure, verifiable voting for your organization</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,100..900,0..100,0..1&family=Hanken+Grotesk:wght@100..900&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
+    <link rel="stylesheet" href="../assets/tokens/editorial.css" />
+    <style>
+      /* Page-specific layout only; every color, radius and font comes from the tokens. */
+      .i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+      .logo { height: 28px; width: auto; color: var(--foreground); display: block; }
+      .hero { padding: 48px 0 96px; }
+      .hero__grid { display: grid; gap: 48px; align-items: center; }
+      @media (min-width: 1024px) { .hero__grid { grid-template-columns: 1fr 1fr; gap: 40px; } }
+      .hero__copy { display: flex; flex-direction: column; align-items: flex-start; gap: 30px; }
+      .hero__lede { font-size: 18px; line-height: 1.625; color: var(--muted-foreground); max-width: 600px; }
+      .hero__lede strong { font-weight: 500; color: var(--foreground); }
+      .hero__ctas { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+      .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+      .timeline { position: relative; display: none; flex-direction: column; gap: 40px; max-width: 420px; margin-left: auto; padding-left: 56px; }
+      @media (min-width: 1024px) { .timeline { display: flex; } }
+      .timeline::before { content: ''; position: absolute; left: 16px; top: -16px; bottom: 60px; width: 2px; background: linear-gradient(to bottom, transparent, color-mix(in oklch, var(--primary) 30%, transparent), transparent); }
+      .step { position: relative; }
+      .step::before { content: ''; position: absolute; left: -40px; top: 44px; width: 40px; border-top: 1px dashed color-mix(in oklch, var(--primary) 40%, transparent); }
+      .step::after { content: ''; position: absolute; left: -45px; top: 39px; width: 10px; height: 10px; border-radius: 50%; background: var(--background); border: 2px solid var(--primary); }
+      .mock { padding: 16px; }
+      .mock__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+      .mock__title { font-family: var(--font-sans); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+      .mock__rows { border: 1px solid var(--border); border-radius: var(--radius-md); background: color-mix(in oklch, var(--muted) 30%, transparent); padding: 8px 10px; display: grid; gap: 6px; font-size: 13px; }
+      .mock__row { display: flex; justify-content: space-between; align-items: center; }
+      .ok { color: var(--success); font-size: 11px; display: inline-flex; gap: 3px; align-items: center; }
+      .no { color: var(--warning); font-size: 11px; display: inline-flex; gap: 3px; align-items: center; }
+      .ok .i, .no .i { width: 11px; height: 11px; }
+      .trust { display: grid; gap: 24px; text-align: center; }
+      @media (min-width: 768px) { .trust { grid-template-columns: repeat(3, 1fr); } }
+      .trust__num { font-family: var(--font-sans); font-size: 24px; font-weight: 600; }
+      .checks { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 30px; padding-bottom: 32px; margin-bottom: 32px; border-bottom: 1px solid var(--border); font-size: 15px; color: var(--muted-foreground); }
+      .checks span { display: inline-flex; gap: 8px; align-items: center; }
+      .checks .i { color: var(--primary); }
+      .grid-3 { display: grid; gap: 16px; margin-top: 64px; }
+      @media (min-width: 768px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
+      .grid-3 article { display: flex; flex-direction: column; gap: 14px; }
+      .washes { display: grid; gap: 24px; margin-top: 64px; }
+      @media (min-width: 1024px) { .washes { grid-template-columns: 1fr 1fr; } }
+      .wash { position: relative; display: flex; flex-direction: column; gap: 12px; min-height: 260px; padding: 32px; border-radius: var(--radius-card); transition: background-color 300ms ease; }
+      .wash h3 { font-family: var(--font-sans); font-size: 18px; font-weight: 600; letter-spacing: normal; color: var(--primary); }
+      .wash p { color: var(--muted-foreground); max-width: 34rem; }
+      .wash__go { position: absolute; right: 20px; bottom: 20px; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; color: #fff; }
+      .wash__go .i { width: 20px; height: 20px; rotate: -23deg; transition: rotate 200ms ease; }
+      .wash:hover .wash__go .i { rotate: 0deg; }
+      .wash--green { background: color-mix(in oklch, #16a34a 10%, transparent); } .wash--green:hover { background: color-mix(in oklch, #16a34a 20%, transparent); } .wash--green .wash__go { background: #16a34a; }
+      .wash--sky { background: color-mix(in oklch, #0284c7 10%, transparent); } .wash--sky:hover { background: color-mix(in oklch, #0284c7 20%, transparent); } .wash--sky .wash__go { background: #0284c7; }
+      .compare { margin-top: 64px; overflow-x: auto; }
+      .compare table { width: 100%; min-width: 720px; border-collapse: collapse; }
+      .compare th { padding: 20px; font-family: var(--font-serif); font-variation-settings: 'SOFT' 100; font-weight: 400; font-size: 22px; letter-spacing: -0.02em; color: var(--muted-foreground); text-align: left; border-bottom: 1px solid var(--border); }
+      .compare td { padding: 20px; border-bottom: 1px solid var(--border); font-size: 15px; vertical-align: top; }
+      .compare td:first-child { color: var(--muted-foreground); }
+      .compare .hl { background: color-mix(in oklch, var(--primary) 8%, transparent); }
+      .compare th.hl { color: var(--primary); text-align: center; }
+      .compare .cell { display: flex; gap: 10px; align-items: flex-start; }
+      .compare .yes .i { color: var(--primary); width: 20px; height: 20px; }
+      .compare .neg .i { color: var(--destructive); width: 20px; height: 20px; }
+      .closing { margin-top: 80px; padding: 40px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 24px; }
+      .footer__grid { display: grid; gap: 40px; }
+      @media (min-width: 1024px) { .footer__grid { grid-template-columns: 2fr 1fr 1fr 1fr; } }
+      .footer__grid ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+      .footer__bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <svg style="display: none" aria-hidden="true">
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></symbol>
+      <symbol id="i-arrow-ur" viewBox="0 0 24 24"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><path d="M2 12h20" /></symbol>
+      <symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></symbol>
+      <symbol id="i-circle-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" /></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 8v4" /><path d="M12 16h.01" /></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></symbol>
+      <symbol id="i-briefcase" viewBox="0 0 24 24"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /><rect width="20" height="14" x="2" y="6" rx="2" /></symbol>
+      <symbol id="i-landmark" viewBox="0 0 24 24"><path d="M3 22h18" /><path d="M6 18v-7" /><path d="M10 18v-7" /><path d="M14 18v-7" /><path d="M18 18v-7" /><path d="M12 2 20 7H4z" /></symbol>
+      <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M3 5V19A9 3 0 0 0 21 19V5" /><path d="M3 12A9 3 0 0 0 21 12" /></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></symbol>
+      <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" /><path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" /><path d="M2 2l20 20" /></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></symbol>
+    </svg>
+
+    <a class="vd-sr-only" href="#main">Skip to main content</a>
+
+    <!-- Navbar: glass bar, logo left, centered links with 1x12px dividers, dark CTA right -->
+    <header class="vd-navbar">
+      <div class="vd-navbar__inner">
+        <a href="#" aria-label="Vocdoni - go to homepage"><svg class="logo" viewBox="0 0 1000 215" fill="currentColor" aria-hidden="true"><g transform="translate(-460,-433.082)">
+  <path d="m 648.53,548.952 -62.85,36.29 -62.84,-36.28 -62.84,-36.29 v 62.85 l 62.84,36.28 62.84,36.28 62.84,-36.28 62.85,-36.28 v -62.85 z" />
+  <path d="m 614.16,433.082 -62.84,36.28 v 62.85 l 62.84,-36.29 z" />
+  <path d="m 875.09,512.702 -50.43,97.7 -50.45,-97.7 h 29.28 l 21.17,41.08 21.17,-41.08 z" />
+  <path d="m 878.57,559.802 c 0,-14 4.8,-25.76 14.22,-35.18 9.62,-9.42 21.54,-14.22 35.57,-14.22 14.03,0 26,4.8 35.37,14.22 9.613,9.42 14.42,21.147 14.42,35.18 0,14 -4.81,25.76 -14.23,35.18 -9.42,9.42 -21.33,14 -35.56,14 -14.23,0 -26.15,-4.62 -35.57,-14 -9.42,-9.38 -14.22,-21.14 -14.22,-35.18 z m 27.87,0 c 0,6.92 2.12,12.69 6.16,17.11 2.037,2.127 4.483,3.82 7.192,4.977 2.708,1.156 5.623,1.752 8.568,1.752 2.945,0 5.86,-0.596 8.568,-1.752 2.709,-1.157 5.155,-2.85 7.192,-4.977 4,-4.42 6.15,-10.19 6.15,-17.11 0,-6.92 -2.11,-12.68 -6.15,-17.11 -2.039,-2.125 -4.485,-3.815 -7.194,-4.97 -2.708,-1.155 -5.622,-1.75 -8.566,-1.75 -2.944,0 -5.858,0.595 -8.567,1.75 -2.708,1.155 -5.155,2.845 -7.193,4.97 -4.04,4.43 -6.16,10.19 -6.16,17.11 z" />
+  <path d="m 1084.23,589.022 c -10.19,13.27 -23.83,20 -41.33,20 -14.22,0 -26.14,-4.62 -35.56,-14 -9.42,-9.38 -14.23,-21.14 -14.23,-35.18 0,-14.04 4.81,-25.76 14.23,-35.18 9.61,-9.42 21.53,-14.22 35.56,-14.22 15,0 28.07,6.34 39.41,18.84 l -18.48,17.84 c -6,-7.31 -12.69,-11 -20,-11 -13.07,0 -22.87,9.8 -22.87,23.64 0,13.84 9.8,23.65 22.87,23.65 8.27,0 15.57,-4 21.92,-12.3 z" />
+  <path d="m 1107.94,524.242 c 9,-9.23 20.38,-13.84 33.64,-13.84 9.81,0 17.88,2.69 24.22,8.26 v -46.52 h 27.3 v 134.76 h -26.91 v -6.73 c -6.15,6 -14.42,8.85 -24.61,8.85 -13.26,0 -24.61,-4.42 -33.64,-13.46 -9.03,-9.04 -13.46,-21 -13.46,-35.76 0,-14.61 4.42,-26.52 13.46,-35.56 z m 58.25,35.56 c 0,-7.11 -2.12,-13.07 -6.35,-17.68 -1.91,-2.245 -4.3,-4.032 -7,-5.229 -2.69,-1.198 -5.62,-1.776 -8.57,-1.691 -2.97,-0.065 -5.92,0.521 -8.65,1.717 -2.72,1.195 -5.15,2.971 -7.11,5.203 -4,4.61 -6.15,10.57 -6.15,17.68 0,7.11 2.11,13.08 6.15,17.69 1.97,2.231 4.39,4.006 7.12,5.201 2.72,1.195 5.67,1.782 8.64,1.719 2.95,0.083 5.88,-0.496 8.57,-1.693 2.69,-1.198 5.09,-2.984 7,-5.227 4.23,-4.61 6.35,-10.57 6.35,-17.69 z" />
+  <path d="m 1210,559.802 c 0,-14 4.81,-25.76 14.23,-35.18 9.61,-9.42 21.53,-14.22 35.57,-14.22 14.04,0 26,4.8 35.37,14.22 9.61,9.42 14.42,21.147 14.42,35.18 0,14 -4.81,25.76 -14.23,35.18 -9.42,9.42 -21.34,14 -35.56,14 -14.22,0 -26.15,-4.62 -35.57,-14 -9.42,-9.38 -14.23,-21.14 -14.23,-35.18 z m 27.88,0 c 0,6.92 2.11,12.69 6.15,17.11 2.04,2.128 4.48,3.821 7.19,4.977 2.71,1.157 5.63,1.753 8.57,1.753 2.95,0 5.87,-0.596 8.58,-1.753 2.7,-1.156 5.15,-2.849 7.19,-4.977 4,-4.42 6.15,-10.19 6.15,-17.11 0,-6.92 -2.11,-12.68 -6.15,-17.11 -2.04,-2.125 -4.49,-3.816 -7.2,-4.971 -2.71,-1.154 -5.62,-1.75 -8.57,-1.75 -2.94,0 -5.85,0.596 -8.56,1.75 -2.71,1.155 -5.16,2.846 -7.2,4.971 -4.04,4.43 -6.15,10.19 -6.15,17.11 z" />
+  <path d="m 1324.83,512.702 h 46.09 c 11.07,0.003 21.68,4.402 29.51,12.229 7.82,7.828 12.22,18.443 12.22,29.511 v 52.46 h -27.52 v -52.32 c -0.07,-4.423 -1.87,-8.643 -5.02,-11.756 -3.14,-3.113 -7.38,-4.873 -11.8,-4.904 h -16.21 v 69 h -27.27 z" />
+  <path d="m 1432.51,606.902 v -94.2 H 1460 v 94.2 z" />
+  <path d="m 1460,472.152 h -27.44 v 27.44 H 1460 Z" />
+  </g></svg></a>
+        <nav aria-label="Main">
+          <ul class="vd-navbar__links">
+            <li><a class="vd-navbar__link" href="#">Solutions <svg class="i" style="width: 14px; height: 14px"><use href="#i-chevron" /></svg></a></li>
+            <li class="vd-navbar__divider" aria-hidden="true"></li>
+            <li><a class="vd-navbar__link" href="#">Use cases</a></li>
+            <li class="vd-navbar__divider" aria-hidden="true"></li>
+            <li><a class="vd-navbar__link" href="#">Technology</a></li>
+            <li class="vd-navbar__divider" aria-hidden="true"></li>
+            <li><a class="vd-navbar__link" href="#">Resources <svg class="i" style="width: 14px; height: 14px"><use href="#i-chevron" /></svg></a></li>
+            <li class="vd-navbar__divider" aria-hidden="true"></li>
+            <li><a class="vd-navbar__link" href="#">About us</a></li>
+            <li class="vd-navbar__divider" aria-hidden="true"></li>
+            <li><a class="vd-navbar__link" href="#">Contact</a></li>
+          </ul>
+        </nav>
+        <div style="display: flex; align-items: center; gap: 10px">
+          <button class="vd-btn vd-btn--ghost vd-btn--sm" aria-label="Change language"><svg class="i"><use href="#i-globe" /></svg> EN</button>
+          <a class="vd-btn vd-btn--dark" href="#">Sign in</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- Hero -->
+      <section class="hero">
+        <div class="vd-container hero__grid">
+          <div class="hero__copy">
+            <div class="vd-hero-measure"><h1 class="vd-hero-title">Run secure, verifiable elections for your organization</h1></div>
+            <p class="hero__lede">
+              <strong>Take your voting processes online without taking on the risk.</strong>
+              Vocdoni combines legal compliance, voter privacy, and results that you and your members can check
+              independently.
+            </p>
+            <div class="hero__ctas">
+              <a class="vd-btn vd-btn--dark vd-btn--lg" href="#">Start for free <svg class="i" style="width: 20px; height: 20px"><use href="#i-arrow" /></svg></a>
+              <a class="vd-btn vd-btn--quiet" href="#">Talk to an expert</a>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 14px">
+              <span class="vd-label">Built for</span>
+              <div class="chips">
+                <a class="vd-chip" href="#"><svg class="i"><use href="#i-briefcase" /></svg>Professional associations</a>
+                <a class="vd-chip" href="#"><svg class="i"><use href="#i-users" /></svg>Associations &amp; federations</a>
+                <a class="vd-chip" href="#"><svg class="i"><use href="#i-landmark" /></svg>City councils</a>
+                <a class="vd-btn vd-btn--link" href="#" style="padding: 0 6px">All solutions <svg class="i"><use href="#i-arrow" /></svg></a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real product states in miniature, not decorative illustration -->
+          <div class="timeline" aria-hidden="true">
+            <div class="step">
+              <div class="vd-card card-hover mock">
+                <div class="mock__head"><span class="vd-badge vd-badge--secondary">Step 1</span><svg class="i vd-muted"><use href="#i-database" /></svg></div>
+                <div class="mock__title" style="margin-bottom: 12px">Census creation</div>
+                <div class="mock__rows">
+                  <div class="mock__row vd-muted" style="font-size: 11px"><span>Name</span><span>Status</span></div>
+                  <div class="mock__row"><span>Alice Freeman</span><span class="ok"><svg class="i"><use href="#i-circle-check" /></svg>Eligible</span></div>
+                  <div class="mock__row"><span>Bob Smith</span><span class="no"><svg class="i"><use href="#i-alert" /></svg>Not eligible</span></div>
+                  <div class="mock__row"><span>Charlie Brown</span><span class="ok"><svg class="i"><use href="#i-circle-check" /></svg>Eligible</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="vd-card card-hover mock" style="box-shadow: var(--shadow-xl)">
+                <div class="mock__head"><span class="vd-badge vd-badge--secondary">Step 2</span><span class="vd-badge vd-badge--success">Active election</span></div>
+                <div class="mock__title" style="font-size: 17px">General assembly 2026</div>
+                <p class="vd-muted" style="font-size: 13px; margin: 4px 0 14px">Voting closes in 24h</p>
+                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px"><span class="vd-muted">Participation</span><strong style="font-variant-numeric: tabular-nums">78.4%</strong></div>
+                <div class="vd-progress"><span style="width: 78.4%"></span></div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="vd-card card-hover mock">
+                <div class="mock__head"><span class="vd-badge vd-badge--secondary">Step 3</span><svg class="i" style="color: var(--primary)"><use href="#i-shield" /></svg></div>
+                <div class="mock__title" style="margin-bottom: 12px">Verified results</div>
+                <div style="display: grid; gap: 8px; font-size: 11px">
+                  <div><div style="display: flex; justify-content: space-between"><span>Option A</span><span>62%</span></div><div class="vd-progress" style="height: 4px"><span style="width: 62%; background: var(--chart-4)"></span></div></div>
+                  <div><div style="display: flex; justify-content: space-between"><span>Option B</span><span>28%</span></div><div class="vd-progress" style="height: 4px"><span style="width: 28%; background: var(--chart-4)"></span></div></div>
+                  <div><div style="display: flex; justify-content: space-between"><span>Abstain</span><span>10%</span></div><div class="vd-progress" style="height: 4px"><span style="width: 10%; background: var(--chart-4)"></span></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Trust band: tinted section, check row + figures -->
+      <section class="vd-section vd-section--tint" style="border-block: 1px solid var(--border)">
+        <div class="vd-container">
+          <div class="checks">
+            <span><svg class="i"><use href="#i-circle-check" /></svg>Secret ballot by design</span>
+            <span><svg class="i"><use href="#i-circle-check" /></svg>Fully remote, or hybrid with a room</span>
+            <span><svg class="i"><use href="#i-circle-check" /></svg>GDPR, hosted in the EU</span>
+          </div>
+          <div class="trust">
+            <div><div class="trust__num">350,000+</div><div class="vd-muted" style="font-size: 15px">votes processed on Vocdoni infrastructure</div></div>
+            <div><div class="trust__num">500+</div><div class="vd-muted" style="font-size: 15px">voting processes run with Vocdoni technology</div></div>
+            <div><div class="trust__num">Since 2018</div><div class="vd-muted" style="font-size: 15px">running statutory and public elections in production</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Eyebrow + display heading + lede, then raised panels on a tinted band -->
+      <section class="vd-section vd-section--muted">
+        <div class="vd-container">
+          <div class="vd-section-header vd-section-header--center">
+            <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>What you can prove</span>
+            <h2 class="vd-display">Trust is not a promise. It is a structural property.</h2>
+            <p class="vd-lede">Every guarantee below holds without anyone having to take our word for it.</p>
+          </div>
+          <ul class="grid-3" style="list-style: none; padding: 0">
+            <li><article class="vd-panel vd-panel--raised vd-panel--pad vd-panel--pad-lg">
+              <div class="vd-icon-tile"><svg class="i"><use href="#i-eye-off" /></svg></div>
+              <h3 class="vd-card-title">A secret ballot</h3>
+              <p class="vd-muted" style="font-size: 14px; line-height: 1.625">Identity and ballot are separated by the system itself, not by policy. Nobody can link a vote to a voter.</p>
+            </article></li>
+            <li><article class="vd-panel vd-panel--raised vd-panel--pad vd-panel--pad-lg">
+              <div class="vd-icon-tile"><svg class="i"><use href="#i-search" /></svg></div>
+              <h3 class="vd-card-title">A result anyone can check</h3>
+              <p class="vd-muted" style="font-size: 14px; line-height: 1.625">Any member, observer or auditor can verify the full count without seeing a single individual vote.</p>
+            </article></li>
+            <li><article class="vd-panel vd-panel--raised vd-panel--pad vd-panel--pad-lg">
+              <div class="vd-icon-tile"><svg class="i"><use href="#i-shield" /></svg></div>
+              <h3 class="vd-card-title">Legal evidence</h3>
+              <p class="vd-muted" style="font-size: 14px; line-height: 1.625">Every election closes with an audit trail, a certified results document and a public proof your legal team can rely on.</p>
+            </article></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Product washes: one hue per product at 10% -> 20% on hover, round arrow button -->
+      <section class="vd-section">
+        <div class="vd-container">
+          <div class="vd-section-header">
+            <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Products</span>
+            <h2 class="vd-display">One protocol, the tools around it</h2>
+          </div>
+          <div class="washes">
+            <a class="wash wash--green" href="#">
+              <h3>Vocdoni App</h3>
+              <p>Set up a real election in minutes. No IT team, no paper, no expertise needed - just simple, verifiable voting for any organization.</p>
+              <span class="wash__go"><svg class="i"><use href="#i-arrow" /></svg><span class="vd-sr-only">View product details</span></span>
+            </a>
+            <a class="wash wash--sky" href="#">
+              <h3>Vocdoni SDK</h3>
+              <p>Add verifiable, anonymous voting directly into your own applications with our open-source tools.</p>
+              <pre class="vd-code" style="margin: 8px 0 40px"><code>election.addQuestion('Approve the budget?', '', [
+  { title: 'Yes', value: 0 },
+  { title: 'No', value: 1 },
+])</code></pre>
+              <span class="wash__go"><svg class="i"><use href="#i-arrow" /></svg><span class="vd-sr-only">View product details</span></span>
+            </a>
+          </div>
+
+          <!-- Comparison: Vocdoni column tinted green, serif column heads -->
+          <div class="vd-section-header" style="margin-top: 96px">
+            <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Comparison</span>
+            <h2 class="vd-display">Why organizations choose Vocdoni</h2>
+            <p class="vd-lede">Most digital voting tools ask you to trust their results. Vocdoni gives you proof.</p>
+          </div>
+          <div class="compare">
+            <table>
+              <thead>
+                <tr><th scope="col"><span class="vd-sr-only">Criterion</span></th><th scope="col" class="hl">Vocdoni</th><th scope="col">Traditional voting</th><th scope="col">Other digital voting</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Privacy &amp; security</td>
+                  <td class="hl"><span class="cell yes"><svg class="i"><use href="#i-circle-check" /></svg>Anonymous voting &amp; full process integrity</span></td>
+                  <td><span class="cell yes"><svg class="i"><use href="#i-circle-check" /></svg>Secret paper-based ballot</span></td>
+                  <td><span class="cell neg"><svg class="i"><use href="#i-circle-x" /></svg>Centralized &amp; pseudo-anonymous</span></td>
+                </tr>
+                <tr>
+                  <td>Transparency</td>
+                  <td class="hl"><span class="cell yes"><svg class="i"><use href="#i-circle-check" /></svg>Results anyone can verify</span></td>
+                  <td><span class="cell neg"><svg class="i"><use href="#i-circle-x" /></svg>Trust in the counting committee</span></td>
+                  <td><span class="cell neg"><svg class="i"><use href="#i-circle-x" /></svg>Trust in the provider</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ + closing CTA on a lightly tinted band -->
+      <section class="vd-section vd-section--tint">
+        <div class="vd-container vd-container--narrow">
+          <div class="vd-section-header vd-section-header--center" style="margin-bottom: 56px">
+            <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>FAQ</span>
+            <h2 class="vd-h-section">Questions organizations ask us</h2>
+          </div>
+          <div class="vd-faq">
+            <details open>
+              <summary>Do voters need to install an app or create an account?</summary>
+              <div>No. Voters open a link, identify themselves with the details your organization already has, and vote from any browser.</div>
+            </details>
+            <details>
+              <summary>How do I know the result hasn't been tampered with?</summary>
+              <div>Every vote is recorded on a public ledger. Anyone can recount the result and confirm their own vote was counted, without revealing how they voted.</div>
+            </details>
+            <details>
+              <summary>Is it GDPR compliant?</summary>
+              <div>Yes. Data is hosted in the EU, processing is covered by a data processing agreement, and the voter register is minimised.</div>
+            </details>
+          </div>
+          <div class="vd-panel vd-panel--raised closing" style="border-radius: var(--radius-3xl)">
+            <h3 style="font-size: 26px">Ready to see it for yourself?</h3>
+            <a class="vd-btn vd-btn--primary vd-btn--lg vd-btn--pill" href="#">Start for free</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="vd-footer">
+      <div class="vd-container">
+        <div class="footer__grid">
+          <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 20px; max-width: 320px">
+            <svg class="logo" style="height: 40px" viewBox="0 0 1000 215" fill="currentColor" role="img" aria-label="Vocdoni"><g transform="translate(-460,-433.082)">
+  <path d="m 648.53,548.952 -62.85,36.29 -62.84,-36.28 -62.84,-36.29 v 62.85 l 62.84,36.28 62.84,36.28 62.84,-36.28 62.85,-36.28 v -62.85 z" />
+  <path d="m 614.16,433.082 -62.84,36.28 v 62.85 l 62.84,-36.29 z" />
+  <path d="m 875.09,512.702 -50.43,97.7 -50.45,-97.7 h 29.28 l 21.17,41.08 21.17,-41.08 z" />
+  <path d="m 878.57,559.802 c 0,-14 4.8,-25.76 14.22,-35.18 9.62,-9.42 21.54,-14.22 35.57,-14.22 14.03,0 26,4.8 35.37,14.22 9.613,9.42 14.42,21.147 14.42,35.18 0,14 -4.81,25.76 -14.23,35.18 -9.42,9.42 -21.33,14 -35.56,14 -14.23,0 -26.15,-4.62 -35.57,-14 -9.42,-9.38 -14.22,-21.14 -14.22,-35.18 z m 27.87,0 c 0,6.92 2.12,12.69 6.16,17.11 2.037,2.127 4.483,3.82 7.192,4.977 2.708,1.156 5.623,1.752 8.568,1.752 2.945,0 5.86,-0.596 8.568,-1.752 2.709,-1.157 5.155,-2.85 7.192,-4.977 4,-4.42 6.15,-10.19 6.15,-17.11 0,-6.92 -2.11,-12.68 -6.15,-17.11 -2.039,-2.125 -4.485,-3.815 -7.194,-4.97 -2.708,-1.155 -5.622,-1.75 -8.566,-1.75 -2.944,0 -5.858,0.595 -8.567,1.75 -2.708,1.155 -5.155,2.845 -7.193,4.97 -4.04,4.43 -6.16,10.19 -6.16,17.11 z" />
+  <path d="m 1084.23,589.022 c -10.19,13.27 -23.83,20 -41.33,20 -14.22,0 -26.14,-4.62 -35.56,-14 -9.42,-9.38 -14.23,-21.14 -14.23,-35.18 0,-14.04 4.81,-25.76 14.23,-35.18 9.61,-9.42 21.53,-14.22 35.56,-14.22 15,0 28.07,6.34 39.41,18.84 l -18.48,17.84 c -6,-7.31 -12.69,-11 -20,-11 -13.07,0 -22.87,9.8 -22.87,23.64 0,13.84 9.8,23.65 22.87,23.65 8.27,0 15.57,-4 21.92,-12.3 z" />
+  <path d="m 1107.94,524.242 c 9,-9.23 20.38,-13.84 33.64,-13.84 9.81,0 17.88,2.69 24.22,8.26 v -46.52 h 27.3 v 134.76 h -26.91 v -6.73 c -6.15,6 -14.42,8.85 -24.61,8.85 -13.26,0 -24.61,-4.42 -33.64,-13.46 -9.03,-9.04 -13.46,-21 -13.46,-35.76 0,-14.61 4.42,-26.52 13.46,-35.56 z m 58.25,35.56 c 0,-7.11 -2.12,-13.07 -6.35,-17.68 -1.91,-2.245 -4.3,-4.032 -7,-5.229 -2.69,-1.198 -5.62,-1.776 -8.57,-1.691 -2.97,-0.065 -5.92,0.521 -8.65,1.717 -2.72,1.195 -5.15,2.971 -7.11,5.203 -4,4.61 -6.15,10.57 -6.15,17.68 0,7.11 2.11,13.08 6.15,17.69 1.97,2.231 4.39,4.006 7.12,5.201 2.72,1.195 5.67,1.782 8.64,1.719 2.95,0.083 5.88,-0.496 8.57,-1.693 2.69,-1.198 5.09,-2.984 7,-5.227 4.23,-4.61 6.35,-10.57 6.35,-17.69 z" />
+  <path d="m 1210,559.802 c 0,-14 4.81,-25.76 14.23,-35.18 9.61,-9.42 21.53,-14.22 35.57,-14.22 14.04,0 26,4.8 35.37,14.22 9.61,9.42 14.42,21.147 14.42,35.18 0,14 -4.81,25.76 -14.23,35.18 -9.42,9.42 -21.34,14 -35.56,14 -14.22,0 -26.15,-4.62 -35.57,-14 -9.42,-9.38 -14.23,-21.14 -14.23,-35.18 z m 27.88,0 c 0,6.92 2.11,12.69 6.15,17.11 2.04,2.128 4.48,3.821 7.19,4.977 2.71,1.157 5.63,1.753 8.57,1.753 2.95,0 5.87,-0.596 8.58,-1.753 2.7,-1.156 5.15,-2.849 7.19,-4.977 4,-4.42 6.15,-10.19 6.15,-17.11 0,-6.92 -2.11,-12.68 -6.15,-17.11 -2.04,-2.125 -4.49,-3.816 -7.2,-4.971 -2.71,-1.154 -5.62,-1.75 -8.57,-1.75 -2.94,0 -5.85,0.596 -8.56,1.75 -2.71,1.155 -5.16,2.846 -7.2,4.971 -4.04,4.43 -6.15,10.19 -6.15,17.11 z" />
+  <path d="m 1324.83,512.702 h 46.09 c 11.07,0.003 21.68,4.402 29.51,12.229 7.82,7.828 12.22,18.443 12.22,29.511 v 52.46 h -27.52 v -52.32 c -0.07,-4.423 -1.87,-8.643 -5.02,-11.756 -3.14,-3.113 -7.38,-4.873 -11.8,-4.904 h -16.21 v 69 h -27.27 z" />
+  <path d="m 1432.51,606.902 v -94.2 H 1460 v 94.2 z" />
+  <path d="m 1460,472.152 h -27.44 v 27.44 H 1460 Z" />
+  </g></svg>
+            <p style="line-height: 1.625">Vocdoni provides secure, accessible, and verifiable digital voting technology. Our mission is to enable organizations of any size to make collective decisions with full integrity.</p>
+          </div>
+          <div><h2 class="vd-footer__heading">Product</h2><ul><li><a href="#">Voting platform</a></li><li><a href="#">Pricing</a></li><li><a href="#">SDK &amp; API</a></li><li><a href="#">Documentation</a></li></ul></div>
+          <div><h2 class="vd-footer__heading">Solutions</h2><ul><li><a href="#">Associations &amp; federations</a></li><li><a href="#">Cooperatives</a></li><li><a href="#">City councils</a></li><li><a href="#" style="color: var(--foreground); font-weight: 500">View all solutions</a></li></ul></div>
+          <div><h2 class="vd-footer__heading">Company</h2><ul><li><a href="#">About us</a></li><li><a href="#">Case studies</a></li><li><a href="#">Blog</a></li><li><a href="#">Contact</a></li></ul></div>
+        </div>
+        <div class="vd-footer__legal" style="margin-top: 56px"><a href="#">Terms &amp; conditions</a><a href="#">Privacy policy</a><a href="#">Cookie settings</a></div>
+        <div class="footer__bottom"><span>© 2026 Vocdoni. Made in Barcelona.</span><span>Secure digital voting for everyone.</span></div>
+      </div>
+    </footer>
+  </body>
+</html>

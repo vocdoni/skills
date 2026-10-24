@@ -37,6 +37,16 @@
       "homepage": "https://github.com/vocdoni/skills"
     },
     {
+      "name": "vocdoni-ui-style",
+      "source": "./plugins/vocdoni-ui-style",
+      "description": "Vocdoni look and feel for any UI: editorial (vocdoni.io) and product (vocdoni-app) modes, tokens for Tailwind/shadcn, Chakra v3 and plain CSS, components, logos, HTML examples, voting UX flows and a style checker.",
+      "version": "0.1.0",
+      "category": "design",
+      "tags": ["vocdoni", "design-system", "ui", "ux", "brand", "tailwind", "shadcn", "chakra-ui"],
+      "license": "AGPL-3.0-or-later",
+      "homepage": "https://github.com/vocdoni/skills"
+    },
+    {
       "name": "agentic-dev",
       "source": "./plugins/agentic-dev",
       "description": "Run non-trivial engineering work as a controlled delivery: sized work, audited spec and plan, subagents implementing task by task, every diff reviewed, a strict gate audit before merge, and releases only on the owner's OK. A SessionStart hook makes the model load it without being asked.",

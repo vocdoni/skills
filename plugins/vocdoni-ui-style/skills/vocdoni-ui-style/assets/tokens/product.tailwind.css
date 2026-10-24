@@ -1,0 +1,289 @@
+/*
+ * Vocdoni product mode - Tailwind CSS v4 + shadcn/ui variable names.
+ * The look of vocdoni-app (which itself is Chakra UI v3) ported to Tailwind:
+ * white surfaces, zinc neutrals, Inter at light weights, 6px controls, 8px
+ * cards, a monochrome accent that becomes the organization's color when
+ * --brand is set.
+ *
+ * Fonts: @fontsource/inter 300/400/500/600 (or Google Fonts Inter 300..600).
+ * Spacing: Tailwind's default 4px base, the same as Chakra's, so p-4 = 16px.
+ *
+ * Weight discipline: the app reads light. Use font-normal (400) for headings
+ * and buttons, font-light (300) for form labels and secondary badges,
+ * font-medium (500) for emphasis, font-semibold (600) only for ballot choice
+ * labels, dialog titles and question titles. Never font-bold.
+ */
+@import 'tailwindcss';
+@import 'tw-animate-css'; /* optional: shadcn animated primitives */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Accent. Default = monochrome, Vocdoni's own look. For an organization's
+     color: <html data-brand style="--brand: #1a73e8">, plus --brand-on
+     (#fff or #000, whichever reaches 4.5:1 on the brand) when white fails,
+     and --brand-on-dark if it differs in dark mode. */
+  /* --brand is the organization's color, set inline and never redeclared, so it
+     survives nested light/dark scopes; --brand-default is the monochrome accent. */
+  --brand-default: #18181b;
+  --brand-foreground: #ffffff; /* must reach 4.5:1 on --brand */
+
+  --background: #ffffff;
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #27272a;
+  --muted: #f5f5f5;
+  --muted-foreground: #52525b;
+  --subtle-foreground: #b2b2b2;
+  --accent: #f5f5f5;
+  --accent-foreground: #09090b;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --placeholder: #737373;
+  /* Monochrome tints come from the gray scale; [data-brand] derives them from --brand */
+  --brand-subtle: #f5f5f5;
+  --brand-muted: #e4e4e7;
+  --brand-fg: #27272a;
+  --sidebar: #fbfbfb;
+  --sidebar-foreground: #09090b;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #09090b;
+  --sidebar-border: #e4e4e7;
+
+  /* Status: subtle bg + fg (election status, alerts, plan tags) */
+  --status-green: #dcfce7;
+  --status-green-foreground: #116932;
+  --status-teal: #ccfbf1;
+  --status-teal-foreground: #0c5d56;
+  --status-blue: #dbeafe;
+  --status-blue-foreground: #173da6;
+  --status-purple: #f3e8ff;
+  --status-purple-foreground: #641ba3;
+  --status-orange: #ffedd5;
+  --status-orange-foreground: #92310a;
+  --status-red: #fee2e2;
+  --status-red-foreground: #991919;
+  --status-yellow: #fef9c3;
+  --status-yellow-foreground: #845209;
+  --status-gray: #f5f5f5;
+  --status-gray-foreground: #27272a;
+
+  --chart-1: #18181b;
+  --chart-2: #0d9488;
+  --chart-3: #2563eb;
+  --chart-4: #9333ea;
+  --chart-5: #ea580c;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+  --font-mono: Menlo, ui-monospace, monospace;
+}
+
+
+.dark {
+  --brand-default: #ffffff;
+  --brand-foreground: #000000;
+  --background: #0a0a0a;
+  --foreground: #fcfcfc;
+  --card: #111111;
+  --card-foreground: #fcfcfc;
+  --popover: #111111;
+  --popover-foreground: #fcfcfc;
+  --secondary: #3f3f3f;
+  --secondary-foreground: #fcfcfc;
+  --muted: #3f3f3f;
+  --muted-foreground: #b2b2b2;
+  --subtle-foreground: #737373;
+  --accent: #27272a;
+  --accent-foreground: #fcfcfc;
+  --border: #27272a;
+  --input: #27272a;
+  --brand-subtle: #18181b;
+  --brand-muted: #27272a;
+  --brand-fg: #d4d4d8;
+  --sidebar: #18181b;
+  --sidebar-foreground: #fcfcfc;
+  --sidebar-accent: #27272a;
+  --sidebar-accent-foreground: #fcfcfc;
+  --sidebar-border: #27272a;
+  --status-green: #042713;
+  --status-green-foreground: #86efac;
+  --status-teal: #032726;
+  --status-teal-foreground: #5eead4;
+  --status-blue: #14204a;
+  --status-blue-foreground: #a3cfff;
+  --status-purple: #2f0553;
+  --status-purple-foreground: #d8b4fe;
+  --status-orange: #3b1106;
+  --status-orange-foreground: #fdba74;
+  --status-red: #300c0c;
+  --status-red-foreground: #fca5a5;
+  --status-yellow: #422006;
+  --status-yellow-foreground: #fde047;
+  --status-gray: #27272a;
+  --status-gray-foreground: #e4e4e7;
+}
+
+/* Aliases re-declared on every theming scope, so a nested .dark section or a
+   [data-brand] subtree re-resolves them (custom properties compute where they
+   are declared, not where they are used). */
+:root,
+.dark,
+[data-brand] {
+  --primary: var(--brand, var(--brand-default));
+  --primary-foreground: var(--brand-foreground);
+  --ring: var(--brand, var(--brand-default));
+  --sidebar-primary: var(--brand, var(--brand-default));
+  --sidebar-primary-foreground: var(--brand-foreground);
+  --sidebar-ring: var(--brand, var(--brand-default));
+}
+
+/* White-label, light: subtle = step 100, muted = 200, fg = 700 of the generator */
+[data-brand] {
+  --brand-foreground: var(--brand-on, #ffffff);
+  --brand-subtle: color-mix(in oklab, var(--brand) 10%, white);
+  --brand-muted: color-mix(in oklab, var(--brand) 20%, white);
+  --brand-fg: color-mix(in oklab, var(--brand) 70%, black);
+}
+/* White-label, dark: the brand keeps its color; subtle = 900, muted = 800, fg = 300 */
+.dark[data-brand],
+.dark [data-brand],
+[data-brand] .dark {
+  --brand-foreground: var(--brand-on-dark, var(--brand-on, #ffffff));
+  --brand-subtle: color-mix(in oklab, var(--brand) 40%, black);
+  --brand-muted: color-mix(in oklab, var(--brand) 55%, black);
+  --brand-fg: color-mix(in oklab, var(--brand) 40%, white);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-placeholder: var(--placeholder);
+  --color-brand: var(--primary);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-fg: var(--brand-fg);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-status-green: var(--status-green);
+  --color-status-green-foreground: var(--status-green-foreground);
+  --color-status-teal: var(--status-teal);
+  --color-status-teal-foreground: var(--status-teal-foreground);
+  --color-status-blue: var(--status-blue);
+  --color-status-blue-foreground: var(--status-blue-foreground);
+  --color-status-purple: var(--status-purple);
+  --color-status-purple-foreground: var(--status-purple-foreground);
+  --color-status-orange: var(--status-orange);
+  --color-status-orange-foreground: var(--status-orange-foreground);
+  --color-status-red: var(--status-red);
+  --color-status-red-foreground: var(--status-red-foreground);
+  --color-status-yellow: var(--status-yellow);
+  --color-status-yellow-foreground: var(--status-yellow-foreground);
+  --color-status-gray: var(--status-gray);
+  --color-status-gray-foreground: var(--status-gray-foreground);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  /* Radius: controls 6px, cards/dialogs 8px */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+
+  --shadow-xs: 0px 1px 2px rgb(24 24 27 / 0.1), 0px 0px 1px rgb(24 24 27 / 0.2);
+  --shadow-sm: 0px 2px 4px rgb(24 24 27 / 0.1), 0px 0px 1px rgb(24 24 27 / 0.3);
+  --shadow-md: 0px 4px 8px rgb(24 24 27 / 0.1), 0px 0px 1px rgb(24 24 27 / 0.3);
+  --shadow-lg: 0px 8px 16px rgb(24 24 27 / 0.1), 0px 0px 1px rgb(24 24 27 / 0.3);
+
+  --spacing-sidebar: 255px;
+  --spacing-sidebar-reduced: 48px;
+  --spacing-voting-sidebar: 320px;
+  --container-content: 1200px;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  :root {
+    color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: 400;
+    letter-spacing: -0.025em;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--placeholder);
+  }
+  /* iOS Safari zooms focused inputs under 16px: 16px on mobile, 14px from md */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  @media (min-width: 48rem) {
+    input,
+    select,
+    textarea {
+      font-size: 14px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

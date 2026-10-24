@@ -1,0 +1,58 @@
+<!doctype html>
+<!--
+  Transactional email reference (product mode): a vote invitation with a one-time code.
+  Email clients ignore external CSS, custom properties, OKLCH and most layout: this uses a
+  600px table, inline styles, hex colors, system fonts and a PNG-safe logo slot. The
+  organization is the sender and the protagonist; Vocdoni appears in the footer line.
+  Keep a plain-text alternative with the same content and link.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light only" />
+    <title>Your vote: General assembly 2026</title>
+  </head>
+  <body style="margin: 0; padding: 0; background: #f5f5f5">
+    <!-- Preheader: shown by inbox previews, hidden in the body -->
+    <div style="display: none; max-height: 0; overflow: hidden">Voting is open until 30 Oct 2026, 20:00. Your access code is inside.</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f5f5f5">
+      <tr>
+        <td align="center" style="padding: 32px 16px">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 600px; background: #ffffff; border: 1px solid #e4e4e7; border-radius: 8px">
+            <tr>
+              <td style="padding: 32px 40px 8px; font-family: Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+                <!-- Organization logo here (PNG, 40px tall). Without one, the organization name: -->
+                <p style="margin: 0; font-size: 14px; font-weight: 500; color: #09090b">Col·legi d'Infermeres de Barcelona</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 16px 40px 0; font-family: Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; color: #09090b">
+                <h1 style="margin: 0 0 8px; font-size: 24px; line-height: 1.3; font-weight: 400; letter-spacing: -0.02em">General assembly 2026</h1>
+                <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #52525b">Voting is open until 30 Oct 2026, 20:00. You can vote from any device; you don't need an account.</p>
+                <!-- Six contiguous digits (spacing comes from letter-spacing) so a copy-paste fills the code field -->
+                <p style="margin: 0 0 8px; font-size: 14px; color: #52525b">Your access code</p>
+                <p style="margin: 0 0 24px; padding: 14px 16px; background: #f5f5f5; border-radius: 6px; font-family: Menlo, Consolas, monospace; font-size: 24px; letter-spacing: 0.3em; text-align: center; color: #09090b">481902</p>
+                <!-- Bulletproof button: a padded link inside a table cell -->
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 0 24px">
+                  <tr>
+                    <td style="background: #18181b; border-radius: 6px">
+                      <a href="https://app.vocdoni.io/processes/0x..." style="display: inline-block; padding: 12px 24px; font-family: Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 14px; color: #ffffff; text-decoration: none">Go to the vote</a>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: #52525b">Your vote is anonymous: nobody, not even the organization, can see who voted what. You can change it until voting closes; only your last vote counts.</p>
+                <p style="margin: 0 0 32px; font-size: 14px; line-height: 1.5; color: #52525b">If the button doesn't work, copy this link: <a href="https://app.vocdoni.io/processes/0x..." style="color: #27272a; text-decoration: underline">app.vocdoni.io/processes/0x...</a></p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 20px 40px 28px; border-top: 1px solid #e4e4e7; font-family: Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #737373">
+                You receive this email because you are in the census of this vote. To keep it secure and verifiable, Col·legi d'Infermeres de Barcelona uses the Vocdoni platform. Questions about the vote? Reply to this email or contact your organization.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
