@@ -1,6 +1,6 @@
 {
   "name": "@vocdoni/skills",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Vocdoni's curated skills for AI coding assistants (Claude Code, Cursor, Cline, and other Anthropic-skill-compatible clients).",
   "bin": {
     "vocdoni-skills": "bin/install.js"
