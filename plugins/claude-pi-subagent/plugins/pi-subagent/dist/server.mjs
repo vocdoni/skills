@@ -22823,7 +22823,7 @@ function errorResult(err) {
 function main() {
   const config2 = loadConfig();
   const manager = new PiTaskManager(config2);
-  const server = new McpServer({ name: "pi-subagent", version: "0.2.0" });
+  const server = new McpServer({ name: "pi-subagent", version: "0.2.1" });
   server.registerTool(
     "pi_list_agents",
     {

@@ -47,7 +47,7 @@ function errorResult(err: unknown): CallToolResult {
 function main(): Promise<void> {
   const config = loadConfig();
   const manager = new PiTaskManager(config);
-  const server = new McpServer({ name: "pi-subagent", version: "0.2.0" });
+  const server = new McpServer({ name: "pi-subagent", version: "0.2.1" });
 
   server.registerTool(
     "pi_list_agents",
