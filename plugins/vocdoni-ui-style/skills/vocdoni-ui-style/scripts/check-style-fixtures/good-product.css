@@ -1,0 +1,6 @@
+/* EXPECT mode=product rules=none */
+/* transition: all is banned; this comment is fine */
+.card {
+  border-radius: 8px;
+  transition: border-color 150ms ease;
+}

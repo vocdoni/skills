@@ -15,6 +15,7 @@ claude plugin install vocdoni-integrator-sdk@vocdoni
 claude plugin install vocdoni-go@vocdoni
 claude plugin install vocdoni-stripe@vocdoni
 claude plugin install vocdoni-internal-oauth@vocdoni
+claude plugin install vocdoni-ui-style@vocdoni
 claude plugin install agentic-dev@vocdoni
 claude plugin install pi-subagent@vocdoni   # MCP server + agents — needs Pi (see its README)
 
@@ -49,6 +50,8 @@ SDK references for anyone building voting on Vocdoni — clients, partners, and 
 
 This is a **remote plugin**: the skill lives in the [vocdoni-integrator-sdk repo][integrator-sdk] and is cloned (or pulled) on demand by the npx CLI — pass `--offline` to skip fetching and use the cached clone.
 
+Building the voting UI itself? [`vocdoni-ui-style`](#-vocdoni-ui-style--vocdoni-look-and-feel) (listed under the team skills) carries the product look of the Vocdoni app, including the white-label accent for an organization's own color.
+
 ---
 
 ## Skills for the Vocdoni team
@@ -76,6 +79,12 @@ Requires `jq` and either the [Stripe CLI](https://docs.stripe.com/stripe-cli) wi
 | Skill                    | What it covers |
 | ------------------------ | -------------- |
 | `vocdoni-internal-oauth` | Add Google sign-in for `@vocdoni.org` accounts to an existing internal web tool through the central OpenID Connect provider at `oauth.vocdoni.org`: register the tool as a client in [vocdoni/oauth][oauth], wire the Go kit (`vocauth`) or the Node/TypeScript kit (`@vocdoni/oauth`, Express and Fetch-API frameworks), use any OIDC library or oauth2-proxy for other stacks, develop locally against the dev provider, migrate away from a shared password, rotate cookie keys and troubleshoot. |
+
+### 🎨 `vocdoni-ui-style` — Vocdoni look and feel
+
+| Skill              | What it covers |
+| ------------------ | -------------- |
+| `vocdoni-ui-style` | Build UIs that look and behave like Vocdoni's products, in its two visual modes: **editorial** (vocdoni.io: cream surfaces, warm ink, Fraunces serif headings, green accent, yellow eyebrow dot) for marketing, landing and docs pages, and **product** (vocdoni-app: white, Inter at light weights, monochrome or white-label accent) for dashboards, voting pages and admin tools. Ships tokens for Tailwind v4 + shadcn/ui, Chakra UI v3 and plain CSS, React components, logo files, reference screenshots, runnable HTML examples (landing, voting flow, dashboard, sign-in, vote builder, transactional email), worked React recipes, step-by-step UX flows for voting, vote building and onboarding, specs for docs sites and result PDFs, copy rules, and a brand style checker (`scripts/check-style.mjs`). |
 
 ### 🧭 `agentic-dev` — subagent-driven development with independent audits
 
@@ -117,6 +126,7 @@ claude plugin install vocdoni-integrator-sdk@vocdoni
 claude plugin install vocdoni-go@vocdoni
 claude plugin install vocdoni-stripe@vocdoni
 claude plugin install vocdoni-internal-oauth@vocdoni
+claude plugin install vocdoni-ui-style@vocdoni
 claude plugin install agentic-dev@vocdoni
 claude plugin install pi-subagent@vocdoni   # see plugins/claude-pi-subagent/plugins/pi-subagent/README.md
 ```
@@ -141,6 +151,7 @@ npx @vocdoni/skills install --plugin sdk
 npx @vocdoni/skills install --plugin integrator-sdk   # remote plugin, cloned on demand
 npx @vocdoni/skills install --plugin davinci-sdk      # full name (no vocdoni- prefix)
 npx @vocdoni/skills install --plugin agentic-dev        # skill only; the SessionStart hook is Claude Code plugin-only
+npx @vocdoni/skills install --plugin ui-style           # 'ui-style' → 'vocdoni-ui-style'
 
 # A single skill, looked up across plugins
 npx @vocdoni/skills install go-modern
@@ -180,6 +191,8 @@ Skills are plain directories at `plugins/<plugin>/skills/<skill>/`.
 │   ├── vocdoni-stripe/
 │   │   └── …
 │   ├── vocdoni-internal-oauth/
+│   │   └── …
+│   ├── vocdoni-ui-style/              # skill + tokens, components, logos, examples
 │   │   └── …
 │   ├── agentic-dev/                    # skill + SessionStart hook (hooks/)
 │   │   └── …

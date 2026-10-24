@@ -1,0 +1,185 @@
+<!doctype html>
+<!--
+  Product mode reference: the organization dashboard (vocdoni-app /admin/processes), plain HTML +
+  assets/tokens/product.css. Shows the sidebar shell ("+ New vote" first, grouped nav, user card at
+  the bottom), page header, settings-tab rail, process table with status badges and row actions,
+  usage meter, and a destructive confirm dialog. Below 768px the table becomes cards.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Voting processes - Vocdoni</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" />
+    <link rel="stylesheet" href="../assets/tokens/product.css" />
+    <style>
+      .i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+      .logo { height: 24px; width: auto; color: var(--fg); display: block; }
+      .sidebar-group { display: grid; gap: 2px; }
+      .user { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: var(--radius-sm); }
+      .user:hover { background: var(--bg-muted); }
+      .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--bg-emphasized); display: grid; place-items: center; font-size: 12px; }
+      .tutorial { padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; color: var(--fg-muted); display: grid; gap: 8px; }
+      .grid-2 { display: grid; gap: 16px; margin-bottom: 24px; }
+      @media (min-width: 1024px) { .grid-2 { grid-template-columns: 2fr 1fr; } }
+      .meter-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+      .row-title { color: var(--fg); text-decoration: none; font-weight: 400; }
+      .row-title:hover { text-decoration: underline; }
+      .cards { display: none; gap: 12px; }
+      .card-item { padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); display: grid; gap: 8px; font-size: 14px; color: var(--fg-muted); }
+      @media (max-width: 767px) { .vp-table-wrap { display: none; } .cards { display: grid; } .vp-content { padding: 16px; } }
+      .mobile-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid var(--border); }
+      @media (min-width: 768px) { .mobile-bar { display: none; } }
+      .pager { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--fg-muted); }
+      dialog { border: 0; padding: 0; background: transparent; }
+      dialog::backdrop { background: rgb(0 0 0 / 0.4); }
+    </style>
+  </head>
+  <body>
+    <svg style="display: none" aria-hidden="true">
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14" /><path d="M12 5v14" /></symbol>
+      <symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol>
+      <symbol id="i-vote" viewBox="0 0 24 24"><path d="m9 12 2 2 4-4" /><path d="M5 7c0-1.1.9-2 2-2h10a2 2 0 0 1 2 2v12H5V7Z" /><path d="M22 19H2" /></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><path d="M20 7h-9" /><path d="M14 17H5" /><circle cx="17" cy="17" r="3" /><circle cx="7" cy="7" r="3" /></symbol>
+      <symbol id="i-life" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m4.93 4.93 4.24 4.24" /><path d="m14.83 9.17 4.24-4.24" /><path d="m14.83 14.83 4.24 4.24" /><path d="m9.17 14.83-4.24 4.24" /><circle cx="12" cy="12" r="4" /></symbol>
+      <symbol id="i-updown" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5" /><path d="m7 9 5-5 5 5" /></symbol>
+      <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></symbol>
+      <symbol id="i-panel" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" /></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></symbol>
+    </svg>
+
+    <div class="vp-shell">
+      <!-- Sidebar: primary action first, grouped navigation, account at the bottom -->
+      <aside class="vp-sidebar" aria-label="Main navigation">
+        <a href="#" style="padding: 4px 8px 8px" aria-label="Vocdoni"><svg class="logo" viewBox="0 0 1000 215" fill="currentColor" aria-hidden="true"><g transform="translate(-460,-433.082)">
+  <path d="m 648.53,548.952 -62.85,36.29 -62.84,-36.28 -62.84,-36.29 v 62.85 l 62.84,36.28 62.84,36.28 62.84,-36.28 62.85,-36.28 v -62.85 z" />
+  <path d="m 614.16,433.082 -62.84,36.28 v 62.85 l 62.84,-36.29 z" />
+  <path d="m 875.09,512.702 -50.43,97.7 -50.45,-97.7 h 29.28 l 21.17,41.08 21.17,-41.08 z" />
+  <path d="m 878.57,559.802 c 0,-14 4.8,-25.76 14.22,-35.18 9.62,-9.42 21.54,-14.22 35.57,-14.22 14.03,0 26,4.8 35.37,14.22 9.613,9.42 14.42,21.147 14.42,35.18 0,14 -4.81,25.76 -14.23,35.18 -9.42,9.42 -21.33,14 -35.56,14 -14.23,0 -26.15,-4.62 -35.57,-14 -9.42,-9.38 -14.22,-21.14 -14.22,-35.18 z m 27.87,0 c 0,6.92 2.12,12.69 6.16,17.11 2.037,2.127 4.483,3.82 7.192,4.977 2.708,1.156 5.623,1.752 8.568,1.752 2.945,0 5.86,-0.596 8.568,-1.752 2.709,-1.157 5.155,-2.85 7.192,-4.977 4,-4.42 6.15,-10.19 6.15,-17.11 0,-6.92 -2.11,-12.68 -6.15,-17.11 -2.039,-2.125 -4.485,-3.815 -7.194,-4.97 -2.708,-1.155 -5.622,-1.75 -8.566,-1.75 -2.944,0 -5.858,0.595 -8.567,1.75 -2.708,1.155 -5.155,2.845 -7.193,4.97 -4.04,4.43 -6.16,10.19 -6.16,17.11 z" />
+  <path d="m 1084.23,589.022 c -10.19,13.27 -23.83,20 -41.33,20 -14.22,0 -26.14,-4.62 -35.56,-14 -9.42,-9.38 -14.23,-21.14 -14.23,-35.18 0,-14.04 4.81,-25.76 14.23,-35.18 9.61,-9.42 21.53,-14.22 35.56,-14.22 15,0 28.07,6.34 39.41,18.84 l -18.48,17.84 c -6,-7.31 -12.69,-11 -20,-11 -13.07,0 -22.87,9.8 -22.87,23.64 0,13.84 9.8,23.65 22.87,23.65 8.27,0 15.57,-4 21.92,-12.3 z" />
+  <path d="m 1107.94,524.242 c 9,-9.23 20.38,-13.84 33.64,-13.84 9.81,0 17.88,2.69 24.22,8.26 v -46.52 h 27.3 v 134.76 h -26.91 v -6.73 c -6.15,6 -14.42,8.85 -24.61,8.85 -13.26,0 -24.61,-4.42 -33.64,-13.46 -9.03,-9.04 -13.46,-21 -13.46,-35.76 0,-14.61 4.42,-26.52 13.46,-35.56 z m 58.25,35.56 c 0,-7.11 -2.12,-13.07 -6.35,-17.68 -1.91,-2.245 -4.3,-4.032 -7,-5.229 -2.69,-1.198 -5.62,-1.776 -8.57,-1.691 -2.97,-0.065 -5.92,0.521 -8.65,1.717 -2.72,1.195 -5.15,2.971 -7.11,5.203 -4,4.61 -6.15,10.57 -6.15,17.68 0,7.11 2.11,13.08 6.15,17.69 1.97,2.231 4.39,4.006 7.12,5.201 2.72,1.195 5.67,1.782 8.64,1.719 2.95,0.083 5.88,-0.496 8.57,-1.693 2.69,-1.198 5.09,-2.984 7,-5.227 4.23,-4.61 6.35,-10.57 6.35,-17.69 z" />
+  <path d="m 1210,559.802 c 0,-14 4.81,-25.76 14.23,-35.18 9.61,-9.42 21.53,-14.22 35.57,-14.22 14.04,0 26,4.8 35.37,14.22 9.61,9.42 14.42,21.147 14.42,35.18 0,14 -4.81,25.76 -14.23,35.18 -9.42,9.42 -21.34,14 -35.56,14 -14.22,0 -26.15,-4.62 -35.57,-14 -9.42,-9.38 -14.23,-21.14 -14.23,-35.18 z m 27.88,0 c 0,6.92 2.11,12.69 6.15,17.11 2.04,2.128 4.48,3.821 7.19,4.977 2.71,1.157 5.63,1.753 8.57,1.753 2.95,0 5.87,-0.596 8.58,-1.753 2.7,-1.156 5.15,-2.849 7.19,-4.977 4,-4.42 6.15,-10.19 6.15,-17.11 0,-6.92 -2.11,-12.68 -6.15,-17.11 -2.04,-2.125 -4.49,-3.816 -7.2,-4.971 -2.71,-1.154 -5.62,-1.75 -8.57,-1.75 -2.94,0 -5.85,0.596 -8.56,1.75 -2.71,1.155 -5.16,2.846 -7.2,4.971 -4.04,4.43 -6.15,10.19 -6.15,17.11 z" />
+  <path d="m 1324.83,512.702 h 46.09 c 11.07,0.003 21.68,4.402 29.51,12.229 7.82,7.828 12.22,18.443 12.22,29.511 v 52.46 h -27.52 v -52.32 c -0.07,-4.423 -1.87,-8.643 -5.02,-11.756 -3.14,-3.113 -7.38,-4.873 -11.8,-4.904 h -16.21 v 69 h -27.27 z" />
+  <path d="m 1432.51,606.902 v -94.2 H 1460 v 94.2 z" />
+  <path d="m 1460,472.152 h -27.44 v 27.44 H 1460 Z" />
+  </g></svg></a>
+        <a class="vp-btn vp-btn--xs vp-btn--block" href="#"><svg class="i"><use href="#i-plus" /></svg>New vote</a>
+        <nav class="sidebar-group">
+          <p class="vp-sidebar__section-title">Platform</p>
+          <a class="vp-nav-item" href="#"><svg class="i"><use href="#i-house" /></svg>Dashboard</a>
+          <a class="vp-nav-item" href="#" aria-current="page"><svg class="i"><use href="#i-vote" /></svg>Voting processes</a>
+          <a class="vp-nav-item" href="#"><svg class="i"><use href="#i-users" /></svg>Memberbase</a>
+          <a class="vp-nav-item" href="#"><svg class="i"><use href="#i-settings" /></svg>Settings</a>
+        </nav>
+        <nav class="sidebar-group">
+          <p class="vp-sidebar__section-title">Help</p>
+          <a class="vp-nav-item" href="#"><svg class="i"><use href="#i-life" /></svg>Support</a>
+        </nav>
+        <div class="tutorial" style="margin-top: auto">
+          <strong style="font-weight: 500; color: var(--fg)">First steps</strong>
+          Need help with your first voting process? Watch the tutorial or book a call.
+          <a class="vp-btn vp-btn--outline vp-btn--xs" href="#">Book a call</a>
+        </div>
+        <button class="user vp-btn--ghost" style="border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer">
+          <span class="avatar">AF</span>
+          <span style="flex: 1; min-width: 0; font-size: 14px">Alice<br /><span class="vp-muted" style="font-size: 12px">Col·legi d'Infermeres</span></span>
+          <svg class="i vp-muted"><use href="#i-updown" /></svg>
+        </button>
+      </aside>
+
+      <div style="min-width: 0">
+        <div class="mobile-bar">
+          <button class="vp-btn vp-btn--subtle vp-btn--icon vp-btn--xs" aria-label="Open menu"><svg class="i"><use href="#i-panel" /></svg></button>
+          <a class="vp-btn vp-btn--xs" href="#"><svg class="i"><use href="#i-plus" /></svg>New vote</a>
+        </div>
+        <main class="vp-content">
+          <div class="vp-page-header">
+            <div>
+              <h1 class="vp-title-2xl">Voting processes</h1>
+              <p class="vp-subtitle" style="margin-top: 4px">Every vote of your organization, past and present.</p>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="vp-alert vp-alert--info"><svg class="i"><use href="#i-info" /></svg><div><div class="vp-alert__title">Results stay encrypted until each vote ends</div>Processes with hidden results show their count only after the closing time.</div></div>
+            <div class="vp-box">
+              <div class="meter-row"><span>Votes this year</span><span style="font-variant-numeric: tabular-nums">8 / 10</span></div>
+              <div class="vp-progress vp-progress--orange"><span style="width: 80%"></span></div>
+              <a class="vp-link vp-text-xs" href="#" style="display: inline-block; margin-top: 8px">Upgrade plan</a>
+            </div>
+          </div>
+
+          <div class="vp-tabs" role="tablist" style="margin-bottom: 16px">
+            <button class="vp-tab" role="tab" aria-selected="true">All</button>
+            <button class="vp-tab" role="tab" aria-selected="false">Ended</button>
+            <button class="vp-tab" role="tab" aria-selected="false">Drafts</button>
+          </div>
+
+          <div class="vp-table-wrap">
+            <table class="vp-table">
+              <thead>
+                <tr><th>Title</th><th>Start date</th><th>End date</th><th>Status</th><th class="num">Votes</th><th>Results</th><th><span class="vp-sr-only">Actions</span></th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><a class="row-title" href="#">General assembly 2026</a></td><td>20 Oct 2026</td><td>30 Oct 2026</td>
+                  <td><span class="vp-badge vp-badge--green">Ongoing</span></td><td class="num">711</td>
+                  <td><span class="vp-badge">Not yet</span></td>
+                  <td><button class="vp-btn vp-btn--ghost vp-btn--icon vp-btn--xs" aria-label="End vote" onclick="document.getElementById('endDlg').showModal()"><svg class="i"><use href="#i-dots" /></svg></button></td>
+                </tr>
+                <tr>
+                  <td><a class="row-title" href="#">Board renewal</a></td><td>2 Nov 2026</td><td>9 Nov 2026</td>
+                  <td><span class="vp-badge vp-badge--yellow">Upcoming</span></td><td class="num">0</td>
+                  <td><span class="vp-badge">Not yet</span></td>
+                  <td><button class="vp-btn vp-btn--ghost vp-btn--icon vp-btn--xs" aria-label="More actions"><svg class="i"><use href="#i-dots" /></svg></button></td>
+                </tr>
+                <tr>
+                  <td><a class="row-title" href="#">2026 budget approval</a></td><td>1 Sept 2026</td><td>8 Sept 2026</td>
+                  <td><span class="vp-badge vp-badge--teal">Results available</span></td><td class="num">602</td>
+                  <td><span class="vp-badge vp-badge--blue">Live</span></td>
+                  <td><button class="vp-btn vp-btn--ghost vp-btn--icon vp-btn--xs" aria-label="More actions"><svg class="i"><use href="#i-dots" /></svg></button></td>
+                </tr>
+                <tr>
+                  <td><a class="row-title" href="#">Statutes amendment</a></td><td>3 Jun 2026</td><td>4 Jun 2026</td>
+                  <td><span class="vp-badge vp-badge--red">Canceled</span></td><td class="num">12</td>
+                  <td><span class="vp-badge">Not yet</span></td>
+                  <td><button class="vp-btn vp-btn--ghost vp-btn--icon vp-btn--xs" aria-label="More actions"><svg class="i"><use href="#i-dots" /></svg></button></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="pager"><span>Page 1 of 3</span><span style="display: flex; gap: 6px"><button class="vp-btn vp-btn--outline vp-btn--xs" disabled>Previous</button><button class="vp-btn vp-btn--outline vp-btn--xs">Next</button></span></div>
+          </div>
+
+          <!-- Mobile: the same rows as cards (title + kebab, badge row, label: value lines) -->
+          <div class="cards">
+            <div class="card-item">
+              <div style="display: flex; justify-content: space-between; gap: 8px"><a class="row-title" href="#">General assembly 2026</a><svg class="i"><use href="#i-dots" /></svg></div>
+              <div><span class="vp-badge vp-badge--green">Ongoing</span></div>
+              <div>Ends: 30 Oct 2026</div><div>Votes: 711</div>
+            </div>
+            <div class="card-item">
+              <div style="display: flex; justify-content: space-between; gap: 8px"><a class="row-title" href="#">2026 budget approval</a><svg class="i"><use href="#i-dots" /></svg></div>
+              <div><span class="vp-badge vp-badge--teal">Results available</span></div>
+              <div>Ended: 8 Sept 2026</div><div>Votes: 602</div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Destructive confirm: name the object, state the consequence, red confirm on the right -->
+    <dialog id="endDlg" role="alertdialog" aria-labelledby="endTitle" aria-describedby="endDesc">
+      <div class="vp-dialog">
+        <div class="vp-dialog__header" id="endTitle">End vote</div>
+        <div class="vp-dialog__body" id="endDesc">Ending "General assembly 2026" is irreversible. Voters will no longer be able to vote.</div>
+        <div class="vp-dialog__footer">
+          <button class="vp-btn vp-btn--ghost" onclick="this.closest('dialog').close()">Cancel</button>
+          <button class="vp-btn vp-btn--danger" onclick="this.closest('dialog').close()">End vote</button>
+        </div>
+      </div>
+    </dialog>
+  </body>
+</html>

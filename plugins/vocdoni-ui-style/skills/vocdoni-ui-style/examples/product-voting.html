@@ -1,0 +1,326 @@
+<!doctype html>
+<!--
+  Product mode reference: the public voting page (vocdoni-app /processes/:id), plain HTML +
+  assets/tokens/product.css. Interactive walk-through of the voter flow:
+    Identify (dialog) -> choose -> Vote -> confirm summary -> blocking "processing" -> receipt.
+  Try ?brand=%231a73e8 to see the white-label accent, and the moon button for dark mode.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>General assembly 2026 - Vocdoni</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" />
+    <link rel="stylesheet" href="../assets/tokens/product.css" />
+    <style>
+      .i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+      .logo { height: 26px; width: auto; color: var(--fg); display: block; }
+      /* One column on mobile with the vote info right after the header (so Identify is reachable
+         without scrolling past the ballot); header + ballot left and a sticky sidebar from 1280px. */
+      .page { display: grid; grid-template-areas: 'head' 'aside' 'ballot'; gap: 24px 48px; max-width: 1240px; margin: 0 auto; padding: 32px 16px 96px; }
+      .page > .head { grid-area: head; min-width: 0; }
+      .page > .aside { grid-area: aside; }
+      .page > .ballot-col { grid-area: ballot; min-width: 0; }
+      @media (min-width: 1280px) { .page { grid-template-columns: minmax(0, 1fr) var(--voting-sidebar-w); grid-template-areas: 'head aside' 'ballot aside'; grid-template-rows: auto 1fr; padding-inline: 40px; } }
+      .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0 20px; font-size: 14px; color: var(--fg-muted); }
+      .desc { max-height: 120px; overflow: hidden; position: relative; font-size: 15px; line-height: 1.6; color: var(--fg-muted); }
+      .desc::after { content: ''; position: absolute; inset: auto 0 0; height: 48px; background: linear-gradient(transparent, var(--bg)); }
+      .ballot { margin-top: 24px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-md); }
+      .question + .question { margin-top: 40px; }
+      .question h2 { font-size: 18px; font-weight: 600; letter-spacing: normal; margin-bottom: 4px; }
+      .choices { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+      .tip { margin-top: 12px; text-align: right; font-size: 14px; font-weight: 600; }
+      .vote-bar { position: sticky; bottom: 0; padding: 16px 0 calc(16px + env(safe-area-inset-bottom)); background: var(--bg); }
+      .aside { display: flex; flex-direction: column; gap: 16px; }
+      @media (min-width: 1280px) { .aside { position: sticky; top: 80px; align-self: start; } }
+      .info-row { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+      .info-row .i { margin-top: 2px; color: var(--fg-muted); }
+      .count { font-size: 14px; color: var(--fg-muted); }
+      .count strong { display: block; font-size: 36px; font-weight: 400; color: var(--fg); line-height: 1.2; }
+      dialog { border: 0; padding: 0; background: transparent; max-width: calc(100vw - 32px); }
+      dialog::backdrop { background: rgb(0 0 0 / 0.4); }
+      .otp { height: 48px; font-size: 20px !important; letter-spacing: 0.5em; text-align: center; font-variant-numeric: tabular-nums; }
+      .summary-q { padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; gap: 10px; }
+      .summary-q + .summary-q { margin-top: 12px; }
+      .spinner { width: 32px; height: 32px; border: 3px solid var(--bg-muted); border-top-color: var(--brand-solid); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 8px auto 16px; }
+      @keyframes spin { to { rotate: 360deg; } }
+      .receipt { font-family: var(--font-mono); font-size: 12px; word-break: break-all; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <svg style="display: none" aria-hidden="true">
+      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><path d="M2 12h20" /></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></symbol>
+      <symbol id="i-ext" viewBox="0 0 24 24"><path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></symbol>
+    </svg>
+
+    <!-- Public chrome: sticky blurred bar, logo (or the organization's), language, color mode -->
+    <header class="vp-topbar">
+      <a href="#" aria-label="Vocdoni"><svg class="logo" viewBox="0 0 1000 215" fill="currentColor" aria-hidden="true"><g transform="translate(-460,-433.082)">
+  <path d="m 648.53,548.952 -62.85,36.29 -62.84,-36.28 -62.84,-36.29 v 62.85 l 62.84,36.28 62.84,36.28 62.84,-36.28 62.85,-36.28 v -62.85 z" />
+  <path d="m 614.16,433.082 -62.84,36.28 v 62.85 l 62.84,-36.29 z" />
+  <path d="m 875.09,512.702 -50.43,97.7 -50.45,-97.7 h 29.28 l 21.17,41.08 21.17,-41.08 z" />
+  <path d="m 878.57,559.802 c 0,-14 4.8,-25.76 14.22,-35.18 9.62,-9.42 21.54,-14.22 35.57,-14.22 14.03,0 26,4.8 35.37,14.22 9.613,9.42 14.42,21.147 14.42,35.18 0,14 -4.81,25.76 -14.23,35.18 -9.42,9.42 -21.33,14 -35.56,14 -14.23,0 -26.15,-4.62 -35.57,-14 -9.42,-9.38 -14.22,-21.14 -14.22,-35.18 z m 27.87,0 c 0,6.92 2.12,12.69 6.16,17.11 2.037,2.127 4.483,3.82 7.192,4.977 2.708,1.156 5.623,1.752 8.568,1.752 2.945,0 5.86,-0.596 8.568,-1.752 2.709,-1.157 5.155,-2.85 7.192,-4.977 4,-4.42 6.15,-10.19 6.15,-17.11 0,-6.92 -2.11,-12.68 -6.15,-17.11 -2.039,-2.125 -4.485,-3.815 -7.194,-4.97 -2.708,-1.155 -5.622,-1.75 -8.566,-1.75 -2.944,0 -5.858,0.595 -8.567,1.75 -2.708,1.155 -5.155,2.845 -7.193,4.97 -4.04,4.43 -6.16,10.19 -6.16,17.11 z" />
+  <path d="m 1084.23,589.022 c -10.19,13.27 -23.83,20 -41.33,20 -14.22,0 -26.14,-4.62 -35.56,-14 -9.42,-9.38 -14.23,-21.14 -14.23,-35.18 0,-14.04 4.81,-25.76 14.23,-35.18 9.61,-9.42 21.53,-14.22 35.56,-14.22 15,0 28.07,6.34 39.41,18.84 l -18.48,17.84 c -6,-7.31 -12.69,-11 -20,-11 -13.07,0 -22.87,9.8 -22.87,23.64 0,13.84 9.8,23.65 22.87,23.65 8.27,0 15.57,-4 21.92,-12.3 z" />
+  <path d="m 1107.94,524.242 c 9,-9.23 20.38,-13.84 33.64,-13.84 9.81,0 17.88,2.69 24.22,8.26 v -46.52 h 27.3 v 134.76 h -26.91 v -6.73 c -6.15,6 -14.42,8.85 -24.61,8.85 -13.26,0 -24.61,-4.42 -33.64,-13.46 -9.03,-9.04 -13.46,-21 -13.46,-35.76 0,-14.61 4.42,-26.52 13.46,-35.56 z m 58.25,35.56 c 0,-7.11 -2.12,-13.07 -6.35,-17.68 -1.91,-2.245 -4.3,-4.032 -7,-5.229 -2.69,-1.198 -5.62,-1.776 -8.57,-1.691 -2.97,-0.065 -5.92,0.521 -8.65,1.717 -2.72,1.195 -5.15,2.971 -7.11,5.203 -4,4.61 -6.15,10.57 -6.15,17.68 0,7.11 2.11,13.08 6.15,17.69 1.97,2.231 4.39,4.006 7.12,5.201 2.72,1.195 5.67,1.782 8.64,1.719 2.95,0.083 5.88,-0.496 8.57,-1.693 2.69,-1.198 5.09,-2.984 7,-5.227 4.23,-4.61 6.35,-10.57 6.35,-17.69 z" />
+  <path d="m 1210,559.802 c 0,-14 4.81,-25.76 14.23,-35.18 9.61,-9.42 21.53,-14.22 35.57,-14.22 14.04,0 26,4.8 35.37,14.22 9.61,9.42 14.42,21.147 14.42,35.18 0,14 -4.81,25.76 -14.23,35.18 -9.42,9.42 -21.34,14 -35.56,14 -14.22,0 -26.15,-4.62 -35.57,-14 -9.42,-9.38 -14.23,-21.14 -14.23,-35.18 z m 27.88,0 c 0,6.92 2.11,12.69 6.15,17.11 2.04,2.128 4.48,3.821 7.19,4.977 2.71,1.157 5.63,1.753 8.57,1.753 2.95,0 5.87,-0.596 8.58,-1.753 2.7,-1.156 5.15,-2.849 7.19,-4.977 4,-4.42 6.15,-10.19 6.15,-17.11 0,-6.92 -2.11,-12.68 -6.15,-17.11 -2.04,-2.125 -4.49,-3.816 -7.2,-4.971 -2.71,-1.154 -5.62,-1.75 -8.57,-1.75 -2.94,0 -5.85,0.596 -8.56,1.75 -2.71,1.155 -5.16,2.846 -7.2,4.971 -4.04,4.43 -6.15,10.19 -6.15,17.11 z" />
+  <path d="m 1324.83,512.702 h 46.09 c 11.07,0.003 21.68,4.402 29.51,12.229 7.82,7.828 12.22,18.443 12.22,29.511 v 52.46 h -27.52 v -52.32 c -0.07,-4.423 -1.87,-8.643 -5.02,-11.756 -3.14,-3.113 -7.38,-4.873 -11.8,-4.904 h -16.21 v 69 h -27.27 z" />
+  <path d="m 1432.51,606.902 v -94.2 H 1460 v 94.2 z" />
+  <path d="m 1460,472.152 h -27.44 v 27.44 H 1460 Z" />
+  </g></svg></a>
+      <div style="display: flex; gap: 8px">
+        <button class="vp-btn vp-btn--subtle" aria-label="Change language"><svg class="i"><use href="#i-globe" /></svg> EN</button>
+        <button class="vp-btn vp-btn--subtle vp-btn--icon" aria-label="Toggle color mode" onclick="document.documentElement.classList.toggle('dark')"><svg class="i"><use href="#i-moon" /></svg></button>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="head">
+        <div style="display: flex; gap: 8px">
+          <span class="vp-badge vp-badge--green">Ongoing</span>
+          <span class="vp-badge vp-badge--purple">Hidden until the end</span>
+        </div>
+        <h1 class="vp-title-4xl" style="margin-top: 12px">General assembly 2026</h1>
+        <p class="meta">Voting from 20 Oct 2026, 09:00 to 30 Oct 2026, 20:00</p>
+        <div class="desc">
+          <p>The board submits the 2025 accounts, the 2026 budget and the renewal of two board seats to the members. Read the attached documents before voting. You can change your vote until polls close; only your last vote counts.</p>
+        </div>
+        <button class="vp-btn vp-btn--ghost vp-btn--sm" style="padding: 0; margin-top: 4px">Read more</button>
+      </div>
+
+      <aside class="aside" aria-label="Vote information">
+        <div class="vp-card"><div class="vp-card__body" style="display: grid; gap: 14px">
+          <div class="info-row"><svg class="i"><use href="#i-clock" /></svg><span>Ends in 6 days</span></div>
+          <div class="info-row"><svg class="i"><use href="#i-lock" /></svg><span><strong style="font-weight: 500">Anonymous vote</strong><br /><span class="vp-muted">Nobody, not even the organization, can see who voted what.</span></span></div>
+          <div class="info-row"><svg class="i"><use href="#i-users" /></svg><span>Census: 905 people</span></div>
+        </div></div>
+        <div class="vp-card"><div class="vp-card__body" style="display: grid; gap: 16px; text-align: center">
+          <span class="vp-overline">Voting in progress</span>
+          <p class="count"><strong>711</strong> votes</p>
+          <button class="vp-btn vp-btn--block" id="identifyBtn">Identify</button>
+          <div class="vp-alert vp-alert--success ph-no-capture" id="votedNote" hidden><svg class="i"><use href="#i-check" /></svg><span>Your vote is properly cast</span></div>
+        </div></div>
+        <a class="vp-btn vp-btn--outline vp-btn--block" href="#">Follow the process</a>
+      </aside>
+
+      <div class="ballot-col">
+
+        <div class="vp-tabs-line" role="tablist" style="margin-top: 24px">
+          <button class="vp-tab" role="tab" aria-selected="true">Questions</button>
+          <button class="vp-tab" role="tab" aria-selected="false" disabled>Results</button>
+        </div>
+
+        <form class="ballot ph-no-capture" id="ballot" novalidate>
+          <fieldset class="question" id="q1set" style="border: 0; margin: 0; padding: 0" aria-describedby="q1err">
+            <legend><h2>Do you approve the 2025 accounts?</h2></legend>
+            <div class="choices">
+              <label class="vp-choice"><input type="radio" name="q1" value="0" /><span><span class="vp-choice__label">Yes</span></span></label>
+              <label class="vp-choice"><input type="radio" name="q1" value="1" /><span><span class="vp-choice__label">No</span></span></label>
+              <label class="vp-choice"><input type="radio" name="q1" value="2" /><span><span class="vp-choice__label">Abstain</span></span></label>
+            </div>
+            <p class="vp-field-error" id="q1err" role="alert" hidden style="margin-top: 8px">Select one option</p>
+          </fieldset>
+          <fieldset class="question" id="q2set" style="border: 0; margin: 40px 0 0; padding: 0" aria-describedby="q2err">
+            <legend><h2>Elect two board members</h2></legend>
+            <p class="vp-muted vp-text-sm">Select up to 2 candidates.</p>
+            <div class="choices">
+              <label class="vp-choice"><input type="checkbox" name="q2" value="0" /><span><span class="vp-choice__label">Teresa Jordà</span><br /><span class="vp-choice__desc">Treasurer since 2022. Proposes quarterly open accounts.</span></span></label>
+              <label class="vp-choice"><input type="checkbox" name="q2" value="1" /><span><span class="vp-choice__label">Etna Estrems</span><br /><span class="vp-choice__desc">Coordinates the volunteer network.</span></span></label>
+              <label class="vp-choice"><input type="checkbox" name="q2" value="2" /><span><span class="vp-choice__label">Marc Puig</span><br /><span class="vp-choice__desc">New candidate. Focus on member services.</span></span></label>
+            </div>
+            <p class="tip" id="q2tip">0/2 selected</p>
+            <p class="vp-field-error" id="q2err" role="alert" hidden>Select at least one option</p>
+          </fieldset>
+          <div class="vote-bar">
+            <button class="vp-btn vp-btn--lg vp-btn--block" type="submit" id="voteBtn" disabled>Vote</button>
+          </div>
+        </form>
+      </div>
+
+    </main>
+
+    <!-- 1. Voter authentication (CSP): census fields, then a 6-digit code -->
+    <dialog id="authDlg" aria-labelledby="authTitle">
+      <form class="vp-dialog ph-no-capture" id="authForm" novalidate>
+        <div class="vp-dialog__header" id="authTitle">Authentication</div>
+        <div class="vp-dialog__body" style="display: grid; gap: 14px; color: var(--fg)">
+          <div id="authStep0" style="display: grid; gap: 14px">
+            <div class="vp-field"><label class="vp-label" for="memberNo">Member number</label><input class="vp-input" id="memberNo" placeholder="12345" required aria-describedby="memberNoErr" /><span class="vp-field-error" id="memberNoErr" hidden>This field is required</span></div>
+            <div class="vp-field"><label class="vp-label" for="email">Email</label><input class="vp-input" id="email" type="email" placeholder="your@email.com" autocomplete="email" required aria-describedby="emailHelp emailErr" /><span class="vp-helper" id="emailHelp"><strong style="font-weight: 500">Important:</strong> must match the one registered in the system.</span><span class="vp-field-error" id="emailErr" hidden>Enter a valid email address</span></div>
+            <label class="vp-check"><input type="checkbox" id="terms" required aria-describedby="termsErr" /> <span>I accept the <a class="vp-link" href="#">terms of use</a></span></label>
+            <span class="vp-field-error" id="termsErr" hidden>Accept the terms to continue</span>
+          </div>
+          <div id="authStep1" hidden style="display: grid; gap: 8px">
+            <label class="vp-label" for="otp">Verification code</label>
+            <!-- One field, not six boxes: one label, paste and autofill work, screen readers announce it once -->
+            <input class="vp-input otp" id="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" placeholder="000000" disabled aria-describedby="otpHelp otpErr" />
+            <span class="vp-helper" id="otpHelp">We sent a 6-digit code to your email.</span>
+            <span class="vp-field-error" id="otpErr" hidden>Enter the 6 digits of the code</span>
+            <p class="vp-helper">Didn't receive the code? <button class="vp-btn vp-btn--ghost vp-btn--xs" type="button">Resend it</button></p>
+            <p class="vp-helper">Wrong details? <button class="vp-btn vp-btn--ghost vp-btn--xs" type="button" id="startOver">Start over</button></p>
+          </div>
+        </div>
+        <div class="vp-dialog__footer">
+          <button class="vp-btn vp-btn--ghost" type="button" id="authCancel">Cancel</button>
+          <button class="vp-btn" id="authNext" type="submit">Receive code</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- 2. Confirm: what will be cast, per question -->
+    <dialog id="confirmDlg" aria-labelledby="confirmTitle">
+      <div class="vp-dialog ph-no-capture" style="max-width: 520px">
+        <div class="vp-dialog__header" id="confirmTitle">Confirm your vote</div>
+        <div class="vp-dialog__body"><p style="margin-bottom: 12px">General assembly 2026. You are voting for:</p><div id="summary"></div></div>
+        <div class="vp-dialog__footer">
+          <button class="vp-btn vp-btn--ghost" id="confirmCancel">Cancel</button>
+          <button class="vp-btn" id="confirmOk">Confirm vote</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- 3. Blocking progress: no Escape, no backdrop close -->
+    <dialog id="busyDlg" aria-labelledby="busyTitle">
+      <div class="vp-dialog" style="text-align: center; padding: 24px">
+        <div class="spinner" aria-hidden="true"></div>
+        <p id="busyTitle" style="font-weight: 500">We are processing your vote</p>
+        <p class="vp-muted vp-text-sm" style="margin-top: 6px">This takes a few seconds. Please do not close or refresh this page.</p>
+      </div>
+    </dialog>
+
+    <!-- 4. Receipt -->
+    <dialog id="doneDlg" aria-labelledby="doneTitle">
+      <div class="vp-dialog ph-no-capture">
+        <div class="vp-dialog__header" id="doneTitle">Vote submitted</div>
+        <div class="vp-dialog__body" style="display: grid; gap: 12px">
+          <p>Your vote has been securely cast. You can verify it on the explorer:</p>
+          <a class="vp-link receipt" href="#">0x7f3a9c1e5b2d48f0a6c3e9b1d7f2a4c8e6b0d3f5a9c1e7b2d4f6a8c0e3b5d7f9 <svg class="i" style="width: 12px; height: 12px; vertical-align: -1px"><use href="#i-ext" /></svg></a>
+          <div class="vp-alert vp-alert--warning"><span><span class="vp-alert__title">Anonymous vote:</span> save this receipt now. The platform cannot show it to you again.</span></div>
+        </div>
+        <div class="vp-dialog__footer"><button class="vp-btn" onclick="this.closest('dialog').close()">Close</button></div>
+      </div>
+    </dialog>
+
+    <script>
+      // Demo-only state machine. The real flow calls the voting SDK at each step.
+      const brand = new URLSearchParams(location.search).get('brand')
+      if (brand) {
+        document.documentElement.style.setProperty('--brand', brand)
+        document.documentElement.setAttribute('data-brand', '')
+      }
+      const $ = (id) => document.getElementById(id)
+      const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
+      $('identifyBtn').onclick = () => $('authDlg').showModal()
+      // Inline errors on submit; the first invalid field gets focus.
+      const check = (fields) => {
+        let first = null
+        for (const [input, err] of fields) {
+          const ok = input.checkValidity()
+          $(err).hidden = ok
+          input.setAttribute('aria-invalid', String(!ok))
+          if (!ok && !first) first = input
+        }
+        first?.focus()
+        return !first
+      }
+      $('authForm').onsubmit = (e) => {
+        e.preventDefault()
+        if ($('authStep1').hidden) {
+          if (!check([[$('memberNo'), 'memberNoErr'], [$('email'), 'emailErr'], [$('terms'), 'termsErr']])) return
+          $('authStep0').hidden = true
+          $('authStep1').hidden = false
+          $('otp').disabled = false
+          $('otp').required = true
+          $('otp').focus()
+          $('authNext').textContent = 'Identify'
+          return
+        }
+        if (!check([[$('otp'), 'otpErr']])) return
+        $('authDlg').close()
+        // No success toast: the enabled Vote button is the confirmation.
+        $('identifyBtn').hidden = true
+        $('voteBtn').disabled = false
+        $('voteBtn').focus()
+      }
+      // Accept pasted codes like "481 902": keep digits only, then auto-submit at six, as the app does.
+      $('otp').addEventListener('input', (e) => {
+        const digits = e.target.value.replace(/\D/g, '').slice(0, 6)
+        if (e.target.value !== digits) e.target.value = digits
+        if (digits.length === 6) $('authForm').requestSubmit()
+      })
+      const resetAuth = () => {
+        $('authStep1').hidden = true
+        $('authStep0').hidden = false
+        $('otp').value = ''
+        $('otp').disabled = true
+        $('otp').required = false
+        $('otpErr').hidden = true
+        $('authNext').textContent = 'Receive code'
+      }
+      $('startOver').onclick = () => {
+        resetAuth()
+        $('memberNo').focus()
+      }
+      $('authCancel').onclick = () => {
+        resetAuth()
+        $('authDlg').close()
+      }
+      const q2 = [...document.querySelectorAll('input[name=q2]')]
+      q2.forEach((c) =>
+        c.addEventListener('change', () => {
+          const n = q2.filter((x) => x.checked).length
+          if (n > 2) c.checked = false
+          $('q2tip').textContent = `${Math.min(n, 2)}/2 selected`
+        })
+      )
+      $('ballot').onsubmit = (e) => {
+        e.preventDefault()
+        const q1 = document.querySelector('input[name=q1]:checked')
+        const picked = q2.filter((x) => x.checked)
+        // One error per question, next to it; focus the first invalid choice.
+        $('q1err').hidden = !!q1
+        $('q2err').hidden = picked.length > 0
+        const firstInvalid = !q1 ? document.querySelector('input[name=q1]') : !picked.length ? q2[0] : null
+        if (firstInvalid) {
+          firstInvalid.closest('fieldset').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' })
+          firstInvalid.focus({ preventScroll: true })
+          return
+        }
+        const label = (i) => i.closest('label').querySelector('.vp-choice__label').textContent
+        // Build with textContent: choice labels come from the organizer, never parse them as HTML.
+        const rows = [
+          ['Do you approve the 2025 accounts?', label(q1)],
+          ['Elect two board members', picked.map(label).join(', ')],
+        ].map(([q, a]) => {
+          const row = document.createElement('div')
+          row.className = 'summary-q'
+          row.innerHTML = '<svg class="i" style="color: var(--green-fg); margin-top: 2px" aria-hidden="true"><use href="#i-check"/></svg><div><div class="q" style="font-weight: 500; color: var(--fg)"></div><div class="a"></div></div>'
+          row.querySelector('.q').textContent = q
+          row.querySelector('.a').textContent = a
+          return row
+        })
+        $('summary').replaceChildren(...rows)
+        $('confirmDlg').showModal()
+      }
+      $('confirmCancel').onclick = () => $('confirmDlg').close()
+      $('busyDlg').addEventListener('cancel', (e) => e.preventDefault())
+      $('confirmOk').onclick = () => {
+        $('confirmDlg').close()
+        $('busyDlg').showModal()
+        setTimeout(() => {
+          $('busyDlg').close()
+          $('doneDlg').showModal()
+          $('votedNote').hidden = false
+          $('voteBtn').textContent = 'Vote again'
+        }, 1600)
+      }
+    </script>
+  </body>
+</html>

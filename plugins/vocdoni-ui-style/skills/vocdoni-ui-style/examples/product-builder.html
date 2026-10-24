@@ -1,0 +1,147 @@
+<!doctype html>
+<!--
+  Product mode reference: the vote builder (vocdoni-app /admin/processes/create), plain HTML +
+  assets/tokens/product.css. A document-style canvas (borderless title, description, question
+  boxes with choice previews) and a settings panel with every form control the product uses:
+  switches, date/time pair, radio cards, select, step markers, security level, dropzone, inline
+  min/max selects, field validation. Not a wizard: one page, configuration on the side.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>New vote - Vocdoni</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" />
+    <link rel="stylesheet" href="../assets/tokens/product.css" />
+    <style>
+      .i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+      .layout { display: grid; min-height: 100dvh; }
+      @media (min-width: 1024px) { .layout { grid-template-columns: minmax(0, 1fr) 380px; } }
+      .bar { position: sticky; top: 0; z-index: 3; display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding: 12px 24px; background: color-mix(in oklab, var(--bg) 85%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
+      .bar .vp-badge { margin-right: auto; }
+      .canvas { max-width: 760px; margin: 0 auto; padding: 32px 24px 96px; display: grid; gap: 20px; }
+      .q-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+      .opt { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); }
+      .opt + .opt { margin-top: 8px; }
+      .opt .fake { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border-emphasized); flex-shrink: 0; }
+      .opt input { border: 0; background: none; font: inherit; font-size: 16px; color: var(--fg); flex: 1; padding: 0; }
+      @media (min-width: 768px) { .opt input, #desc { font-size: 15px !important; } }
+      .opt input:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 4px; border-radius: 2px; }
+      .inline-select { width: auto; height: 32px; display: inline-block; margin: 0 4px; padding-left: 10px; }
+      .panel { border-left: 1px solid var(--border); background: var(--bg); }
+      .panel__body { padding: 20px; display: grid; gap: 24px; }
+      .group { display: grid; gap: 14px; }
+      .group h2 { font-size: 16px; font-weight: 500; letter-spacing: normal; display: flex; align-items: center; justify-content: space-between; }
+      .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .step-row { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+      .grip { color: var(--fg-subtle); cursor: grab; }
+    </style>
+  </head>
+  <body>
+    <svg style="display: none" aria-hidden="true">
+      <symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="12" r="1" /><circle cx="9" cy="5" r="1" /><circle cx="9" cy="19" r="1" /><circle cx="15" cy="12" r="1" /><circle cx="15" cy="5" r="1" /><circle cx="15" cy="19" r="1" /></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14" /><path d="M12 5v14" /></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m17 8-5-5-5 5" /><path d="M12 3v12" /></symbol>
+      <symbol id="i-key" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z" /><circle cx="16.5" cy="7.5" r=".5" /></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol>
+    </svg>
+
+    <form class="layout" novalidate onsubmit="event.preventDefault()">
+      <div style="min-width: 0">
+        <div class="bar">
+          <span class="vp-badge">Draft</span>
+          <button class="vp-btn vp-btn--outline vp-btn--sm" type="button">Save</button>
+          <button class="vp-btn vp-btn--sm" type="submit">Publish</button>
+        </div>
+
+        <main class="canvas">
+          <label class="vp-sr-only" for="title">Voting process title</label>
+          <input class="vp-input vp-input--borderless" id="title" placeholder="Voting process title" value="General assembly 2026" style="font-size: 28px" />
+          <label class="vp-sr-only" for="desc">Description</label>
+          <textarea class="vp-textarea vp-input--borderless" id="desc" rows="2" placeholder="Add a description..." style="font-size: 16px; min-height: 0; color: var(--fg-muted)">The board submits the 2025 accounts and two board seats to the members.</textarea>
+
+          <section class="vp-box" aria-labelledby="q1label">
+            <div class="q-head">
+              <span id="q1label" class="vp-text-xs vp-muted">Question 1 of 2</span>
+              <span style="display: flex; gap: 8px; align-items: center">
+                <label class="vp-sr-only" for="q1type">Question type</label>
+                <select class="vp-select" id="q1type" style="height: 32px; width: auto"><option>Single choice</option><option>Multiple choice</option></select>
+                <span class="grip" title="Drag to reorder"><svg class="i"><use href="#i-grip" /></svg></span>
+              </span>
+            </div>
+            <input class="vp-input vp-input--borderless" aria-label="Question title" value="Do you approve the 2025 accounts?" style="font-size: 18px; font-weight: 500; margin-bottom: 12px" />
+            <div class="opt"><span class="fake"></span><input aria-label="Option 1" value="Yes" /><button class="vp-btn vp-btn--ghost vp-btn--icon vp-btn--xs" type="button" aria-label="Remove option"><svg class="i"><use href="#i-x" /></svg></button></div>
+            <div class="opt"><span class="fake"></span><input aria-label="Option 2" value="No" /><button class="vp-btn vp-btn--ghost vp-btn--icon vp-btn--xs" type="button" aria-label="Remove option"><svg class="i"><use href="#i-x" /></svg></button></div>
+            <div class="opt"><span class="fake"></span><input aria-label="Option 3" placeholder="Option 3" /></div>
+            <button class="vp-btn vp-btn--ghost vp-btn--sm" type="button" style="margin-top: 8px"><svg class="i"><use href="#i-plus" /></svg>Add option</button>
+          </section>
+
+          <section class="vp-box" aria-labelledby="q2label">
+            <div class="q-head"><span id="q2label" class="vp-text-xs vp-muted">Question 2 of 2</span><span class="vp-badge">Multiple choice</span></div>
+            <input class="vp-input vp-input--borderless" aria-label="Question title" value="Elect two board members" style="font-size: 18px; font-weight: 500; margin-bottom: 12px" />
+            <p class="vp-text-sm" style="margin-bottom: 12px">
+              Voters must select at least
+              <select class="vp-select inline-select" aria-label="Minimum selections"><option>1</option><option>2</option></select>
+              and at most
+              <select class="vp-select inline-select" aria-label="Maximum selections"><option>2</option><option>3</option></select>
+              options.
+            </p>
+            <div class="vp-dropzone"><svg class="i" style="width: 20px; height: 20px"><use href="#i-upload" /></svg><span><strong style="font-weight: 500; color: var(--fg)">Drop a candidate photo</strong> or browse</span><span class="vp-text-xs">PNG or JPG, up to 5 MB</span></div>
+          </section>
+
+          <button class="vp-btn vp-btn--outline vp-btn--block" type="button"><svg class="i"><use href="#i-plus" /></svg>Add question</button>
+        </main>
+      </div>
+
+      <aside class="panel" aria-label="Settings">
+        <div class="panel__body">
+          <div class="group">
+            <h2>Basic configuration</h2>
+            <label class="vp-switch"><span>Start immediately<br /><span class="vp-helper">Turn off to schedule the start.</span></span><input type="checkbox" role="switch" checked /></label>
+            <div class="vp-field">
+              <span class="vp-label" id="endLabel">End date and time</span>
+              <div class="pair" role="group" aria-labelledby="endLabel">
+                <input class="vp-input" type="date" aria-label="End date" value="2026-10-20" aria-invalid="true" aria-describedby="endErr" />
+                <input class="vp-input" type="time" aria-label="End time" value="20:00" />
+              </div>
+              <span class="vp-field-error" id="endErr">End date must be greater than start date.</span>
+            </div>
+          </div>
+
+          <div class="group">
+            <h2>Results visibility</h2>
+            <label class="vp-radio-card"><input type="radio" name="vis" /><span><span style="font-weight: 500">Live results</span><br /><span class="vp-muted vp-text-xs">Everyone sees the count while voting is open.</span></span></label>
+            <label class="vp-radio-card"><input type="radio" name="vis" checked /><span><span style="font-weight: 500">Hidden until the end</span><br /><span class="vp-muted vp-text-xs">Results are encrypted until the vote closes.</span></span></label>
+            <label class="vp-switch"><span>Anonymous voting<br /><span class="vp-helper">Nobody can link a vote to a voter.</span></span><input type="checkbox" role="switch" /></label>
+          </div>
+
+          <div class="group">
+            <h2>Census <span class="vp-badge vp-badge--orange">1 step left</span></h2>
+            <div class="step-row"><span class="vp-step" data-state="done"><svg class="i" style="width: 12px; height: 12px"><use href="#i-check" /></svg></span>
+              <div class="vp-field" style="flex: 1">
+                <label class="vp-label" for="group">Select a group of members</label>
+                <select class="vp-select" id="group"><option>All members (905)</option><option>Board (12)</option></select>
+              </div>
+            </div>
+            <div class="step-row"><span class="vp-step" data-state="current">2</span>
+              <div style="flex: 1; display: grid; gap: 10px">
+                <span class="vp-label">Set how voters prove who they are</span>
+                <div class="vp-alert vp-alert--warning"><svg class="i"><use href="#i-key" /></svg><div><div class="vp-alert__title">Required before publishing</div>Pick the member details voters must enter to vote, like their ID or member number.</div></div>
+                <button class="vp-btn vp-btn--outline vp-btn--sm" type="button">Configure voter authentication</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="group">
+            <h2>Authentication guarantees</h2>
+            <div class="vp-security"><span data-level="weak">Weak</span><span data-level="mid" data-active>Mid</span><span data-level="strong">Strong</span></div>
+            <p class="vp-helper">Mid: three credentials, no second factor. Turn on email or SMS verification for strong guarantees.</p>
+          </div>
+        </div>
+      </aside>
+    </form>
+  </body>
+</html>
