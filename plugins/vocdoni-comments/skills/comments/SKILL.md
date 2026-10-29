@@ -6,7 +6,7 @@ description: Use whenever writing, adding, editing or reviewing code comments (d
 # Code comments
 
 - **Trimming comments** (`/comments trim` for a branch, `/comments trim project [path]` for the whole project or a folder, a request to trim or clean them up, or your own change adds blocks over 3 lines): follow [trim.md](trim.md).
-- **Reviewing** someone else's comments (a PR, a diff you didn't write) is read-only: report what [trim.md](trim.md) would change, with the same report, minus the parts about edits, and edit nothing.
+- **Reviewing** someone else's comments (a PR, a diff you didn't write) is read-only: report what [trim.md](trim.md) would change, with the same report, minus the parts about edits, and edit nothing. A change you delegated counts as your own, not someone else's.
 - **Anything else:** the rules below apply every time you write or change a comment.
 
 ## Writing comments
@@ -49,9 +49,9 @@ func ParseBallot(data []byte) (Ballot, error) {
 After:
 
 ```go
-// ParseBallot parses a ballot's JSON form without checking choices against
-// MaxChoices (see validate.go). The vote handler calls it under the election
-// lock, so it must not block.
+// ParseBallot parses a ballot's JSON form. Errors are wrapped for errors.Is;
+// choices are checked later, by validateChoices in validate.go. The vote
+// handler calls it under the election lock, so it must not block.
 func ParseBallot(data []byte) (Ballot, error) {
 ```
 

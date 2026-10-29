@@ -54,6 +54,7 @@ Then:
 
 - **Use judgement:** this needs judgement on every block, so do it yourself, or delegate to a subagent on the strongest model available. This overrides any rule that sends code changes to a small worker model.
 - **Never a small model:** don't hand it to a small, fast model. It drops constraints that were only stated in the comment.
+- **Small worker models** don't trim at the pre-commit check: commit as asked and list the blocks over 3 lines in your report, so the agent that delegated the change trims them.
 - **Large diffs or project mode:** split the work by package or module across several such subagents, each with its own list of files.
 
 ## 4. Verify
