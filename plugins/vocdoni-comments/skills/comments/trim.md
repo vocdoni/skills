@@ -54,7 +54,7 @@ Then:
 
 - **Use judgement:** this needs judgement on every block, so do it yourself, or delegate to a subagent on the strongest model available. This overrides any rule that sends code changes to a small worker model.
 - **Never a small model:** don't hand it to a small, fast model. It drops constraints that were only stated in the comment.
-- **Small worker models** don't trim at the pre-commit check: commit as asked and list the blocks over 3 lines in your report, so the agent that delegated the change trims them.
+- **Small worker models** never trim, with or without a commit: list the blocks over 3 lines in your report, so the agent that delegated the change trims them.
 - **Large diffs or project mode:** split the work by package or module across several such subagents, each with its own list of files.
 
 ## 4. Verify
@@ -62,7 +62,7 @@ Then:
 - **Comments only:** the diff contains no code changes beyond what the formatter does.
 - **Formatter:** gofmt, prettier or the project's equivalent is clean on the touched files.
 - **Checks:** build, vet or lint, and tests pass for the touched modules.
-- **Commit:** when the trim is the task itself, don't commit and leave the result for review. When it runs as SKILL.md's pre-commit check, go on with the commit you were making.
+- **Commit:** when the trim is the task itself, don't commit and leave the result for review. When it runs as SKILL.md's pre-commit check, go on with the commit you were making. When you trim a delegated change the worker already committed, commit the trim on that branch before merging it.
 
 ## 5. Report
 

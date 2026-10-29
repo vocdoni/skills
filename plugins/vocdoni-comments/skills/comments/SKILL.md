@@ -42,7 +42,8 @@ Before:
 // The function is pure: it reads no election state and takes no locks.
 // The vote handler calls it while holding the election lock, so it must
 // not block.
-// Choice values are checked against MaxChoices later, in validate.go.
+// Choice values are checked against MaxChoices later, by validateChoices
+// in validate.go.
 func ParseBallot(data []byte) (Ballot, error) {
 ```
 
