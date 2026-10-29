@@ -17,6 +17,7 @@ claude plugin install vocdoni-stripe@vocdoni
 claude plugin install vocdoni-internal-oauth@vocdoni
 claude plugin install vocdoni-ui-style@vocdoni
 claude plugin install agentic-dev@vocdoni
+claude plugin install vocdoni-comments@vocdoni
 claude plugin install pi-subagent@vocdoni   # MCP server + agents — needs Pi (see its README)
 
 # Or grab everything in one shot (skill plugins only; pi-subagent is Claude Code-only)
@@ -98,6 +99,12 @@ Requires `jq` and either the [Stripe CLI](https://docs.stripe.com/stripe-cli) wi
 
 The plugin also installs a **SessionStart hook** so the model loads the skill on its own for feature, refactor, protocol, migration, multi-repo, deploy and benchmark work, and resumes any unfinished `.delivery/` ledger in the current repo. The hook is Claude Code-only; an npx install gets the skill, which still triggers from its description.
 
+### 💬 `vocdoni-comments` — code comments
+
+| Skill      | What it covers |
+| ---------- | -------------- |
+| `comments` | How to write code comments (doc, inline, JSDoc): 1-3 lines per block that say the why or a constraint the code can't show, without restating code, narrating history or repeating documented flows, and with claims that match the code. `trim.md` shortens existing comments, either the blocks a branch added (`/comments trim`) or every long block in a project or folder (`/comments trim project [path]`; a plugin install namespaces them as `/vocdoni-comments:comments trim`), keeping anything only the comment said and reporting where each dropped piece lives. |
+
 ### 🤖 `pi-subagent` — delegate to Pi subagents
 
 Delegate work to **named [Pi][pi] subagents** — reusable personas, each with its own model and tools (including MCP tools) — and to bounded one-off coding tasks. Unlike the skill plugins above, this one bundles a local **MCP server** that launches Pi (`pi --mode rpc`), isolates code edits in a detached **git worktree**, and hands back a summary plus a diff to review. Changes are never applied automatically.
@@ -132,6 +139,7 @@ claude plugin install vocdoni-stripe@vocdoni
 claude plugin install vocdoni-internal-oauth@vocdoni
 claude plugin install vocdoni-ui-style@vocdoni
 claude plugin install agentic-dev@vocdoni
+claude plugin install vocdoni-comments@vocdoni
 claude plugin install pi-subagent@vocdoni   # see plugins/claude-pi-subagent/plugins/pi-subagent/README.md
 ```
 
@@ -156,6 +164,7 @@ npx @vocdoni/skills install --plugin integrator-sdk   # remote plugin, cloned on
 npx @vocdoni/skills install --plugin davinci-sdk      # full name (no vocdoni- prefix)
 npx @vocdoni/skills install --plugin agentic-dev        # skill only; the SessionStart hook is Claude Code plugin-only
 npx @vocdoni/skills install --plugin ui-style           # 'ui-style' → 'vocdoni-ui-style'
+npx @vocdoni/skills install --plugin comments           # 'comments' → 'vocdoni-comments'
 
 # A single skill, looked up across plugins
 npx @vocdoni/skills install go-modern
@@ -196,6 +205,7 @@ claude plugin update vocdoni-integrator-sdk@vocdoni
 claude plugin update vocdoni-go@vocdoni
 claude plugin update vocdoni-stripe@vocdoni
 claude plugin update agentic-dev@vocdoni
+claude plugin update vocdoni-comments@vocdoni
 claude plugin update pi-subagent@vocdoni
 ```
 
@@ -244,6 +254,8 @@ Copy the skill directories again over the old ones, or `git pull` if you symlink
 │   ├── vocdoni-ui-style/              # skill + tokens, components, logos, examples
 │   │   └── …
 │   ├── agentic-dev/                    # skill + SessionStart hook (hooks/)
+│   │   └── …
+│   ├── vocdoni-comments/
 │   │   └── …
 │   └── claude-pi-subagent/             # nested marketplace (pi-agent-tools)
 │       └── plugins/pi-subagent/        # MCP server plugin + agents — see its README
