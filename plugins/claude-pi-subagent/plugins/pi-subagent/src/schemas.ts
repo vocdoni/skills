@@ -26,13 +26,17 @@ const thinkingField = z
 
 const toolsField = z
   .array(z.enum(BUILTIN_TOOLS))
+  .max(BUILTIN_TOOLS.length)
   .describe(
     "Override the tool allowlist. Allowed: read, bash, edit, write, grep, find, ls. " +
       "Omit to use the safe default for the chosen mode.",
   );
 
+export const MAX_FILES = 1000;
+
 const filesField = z
   .array(z.string())
+  .max(MAX_FILES)
   .describe("Files Claude wants Pi to focus on (project-relative). Passed to Pi as context.");
 
 const providerField = z.string().describe("Pi provider override (e.g. anthropic, openai, google).");

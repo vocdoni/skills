@@ -36995,10 +36995,11 @@ function formatResultText(result) {
 // src/schemas.ts
 var modeField = external_exports.enum(TASK_MODES).describe("Task mode. read-only: ask, review, plan. write (worktree): patch, test.");
 var thinkingField = external_exports.enum(THINKING_LEVELS).describe("Pi thinking/reasoning level. Overrides the plugin default.");
-var toolsField = external_exports.array(external_exports.enum(BUILTIN_TOOLS)).describe(
+var toolsField = external_exports.array(external_exports.enum(BUILTIN_TOOLS)).max(BUILTIN_TOOLS.length).describe(
   "Override the tool allowlist. Allowed: read, bash, edit, write, grep, find, ls. Omit to use the safe default for the chosen mode."
 );
-var filesField = external_exports.array(external_exports.string()).describe("Files Claude wants Pi to focus on (project-relative). Passed to Pi as context.");
+var MAX_FILES = 1e3;
+var filesField = external_exports.array(external_exports.string()).max(MAX_FILES).describe("Files Claude wants Pi to focus on (project-relative). Passed to Pi as context.");
 var providerField = external_exports.string().describe("Pi provider override (e.g. anthropic, openai, google).");
 var modelField = external_exports.string().describe("Pi model override (pattern or 'provider/id[:thinking]').");
 var useWorktreeField = external_exports.boolean().describe("Run inside an isolated detached git worktree. Defaults to the plugin setting.");
