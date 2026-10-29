@@ -103,7 +103,7 @@ The plugin also installs a **SessionStart hook** so the model loads the skill on
 
 | Skill      | What it covers |
 | ---------- | -------------- |
-| `comments` | How to write code comments (doc, inline, JSDoc): 1-3 lines per block that say the why or a constraint the code can't show, without restating code, narrating history or repeating documented flows, and with claims that match the code. `trim.md` shortens existing comments, either the blocks a branch added (`/comments trim`) or every long block in a project or folder (`/comments trim project [path]`), keeping anything only the comment said and reporting where each dropped piece lives. |
+| `comments` | How to write code comments (doc, inline, JSDoc): 1-3 lines per block that say the why or a constraint the code can't show, without restating code, narrating history or repeating documented flows, and with claims that match the code. `trim.md` shortens existing comments, either the blocks a branch added (`/comments trim`) or every long block in a project or folder (`/comments trim project [path]`; a plugin install namespaces them as `/vocdoni-comments:comments trim`), keeping anything only the comment said and reporting where each dropped piece lives. |
 
 ### 🤖 `pi-subagent` — delegate to Pi subagents
 
