@@ -12,7 +12,7 @@ A **block** is a run of consecutive comment lines.
 
 ### Branch mode
 
-1. **Base:** use the ref you were given, or else the merge base with the remote default branch (`git fetch`, then `origin/HEAD`, else `origin/main` or `origin/master`). Read `git diff <base>...HEAD`, plus uncommitted changes if the tree is dirty.
+1. **Base:** the fork point, `git merge-base <ref> HEAD`, where `<ref>` is the ref you were given, or else the remote default branch (`git fetch`, then `origin/HEAD`, else `origin/main` or `origin/master`). Read `git diff <base>...HEAD`, plus uncommitted changes if the tree is dirty.
 2. **In scope** means one of:
    - the branch created the block, or
    - the block existed on the base and the branch made it longer. Compare with `git show <base>:<file>`.
@@ -34,8 +34,10 @@ A **block** is a run of consecutive comment lines.
 
 For every piece of information you'd drop, classify it:
 - **(a) The code says it:** names, logic or types make it obvious. Drop it.
-- **(b) It's documented elsewhere:** in the repo's docs or another comment in the same package. Search for it and note the file and line. Drop it, or leave a short pointer.
+- **(b) It's documented elsewhere:** in the repo's docs or another comment in the same package. Search for it and note the file and line for the report. Drop it, or leave a short pointer.
   - The other place must survive this run: docs, or a comment you're keeping. If two in-scope comments say the same thing, don't drop it from both; keep it at the spot it concerns most.
+  - Dropping a duplicate must not lose a detail only it had. That detail is (c) at its own spot: keep it there in its 1-3 lines, rather than merging it into the surviving comment, which would only make that one long.
+  - A pointer names the file and identifier ("see `vote.go` `castBallot`"), never a line number, which goes stale.
 - **(c) It's only here:** if it's a real constraint, a non-obvious why or a gotcha, it **must stay**.
   - Rework the comment so it fits in 3 lines and still carries it,
   - or move it to the line or field it concerns, still within 3 lines.
@@ -59,15 +61,16 @@ Then:
 - **Comments only:** the diff contains no code changes beyond what the formatter does.
 - **Formatter:** gofmt, prettier or the project's equivalent is clean on the touched files.
 - **Checks:** build, vet or lint, and tests pass for the touched modules.
-- **No commit:** leave the result for review.
+- **Commit:** when the trim is the task itself, don't commit and leave the result for review. When it runs as SKILL.md's pre-commit check, go on with the commit you were making.
 
 ## 5. Report
 
-- **One entry per block**, a table when there are more than a few. In project mode, group the table by package:
+- **One entry per in-scope block**, a table when there are more than a few. In project mode, group the table by package:
   - file:identifier,
-  - in scope (created, grown from N to M lines, or N lines in project mode) or out of scope (why),
+  - in scope (created, grown from N to M lines, or N lines in project mode),
   - what was dropped,
   - where that lives: code / file:line / doc section, or "only here: kept".
+- **Out of scope:** blocks the branch touched but didn't add or grow, and skipped files, go in a short list with the reason, not a row each.
 - **Restored or reworked:** the blocks restored to their original text or reworked to keep a constraint.
 - **Leftovers:** any in-scope block still over 3 lines. There should be none; if there is one, say why.
 - **Stale docs:** docs that pointed at a shortened comment and now read wrong. List them; don't fix docs unasked.

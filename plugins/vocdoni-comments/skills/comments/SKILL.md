@@ -5,12 +5,13 @@ description: Use whenever writing, adding, editing or reviewing code comments (d
 
 # Code comments
 
-- **Trimming comments** (`/comments trim` for a branch, `/comments trim project [path]` for the whole project or a folder, a request to trim or clean them up, or a diff that adds blocks over 3 lines): follow [trim.md](trim.md).
+- **Trimming comments** (`/comments trim` for a branch, `/comments trim project [path]` for the whole project or a folder, a request to trim or clean them up, or your own change adds blocks over 3 lines): follow [trim.md](trim.md).
+- **Reviewing** someone else's comments (a PR, a diff you didn't write) is read-only: report what [trim.md](trim.md) would change, with the same report, minus the parts about edits, and edit nothing.
 - **Anything else:** the rules below apply every time you write or change a comment.
 
 ## Writing comments
 
-- **Length:** 1-3 lines per block, most of them 1-2. This includes doc comments on exported identifiers.
+- **Length:** 1-3 lines per block, most of them 1-2. This includes doc comments on exported identifiers. Package overviews (Go `doc.go`, module docstrings) work as docs and aren't held to 3 lines. Usage examples belong in runnable examples (Go `Example` functions, doctests), not in the doc comment. For comment length this skill takes precedence over the longer-godoc advice in [[go-best-practices]] (its "Documentation is for users" proverb).
 - **Content:** say the why, or a constraint the code can't show:
   - an external API's quirk,
   - a rate limit,
@@ -28,4 +29,30 @@ description: Use whenever writing, adding, editing or reviewing code comments (d
   - follow the language's doc-comment convention (Go: start with the identifier's name),
   - match the surrounding comments' punctuation and line width,
   - keep sentences grammatical. Don't telegraph.
-- **Before committing:** check the diff for added comment blocks over 3 lines, and trim any with [trim.md](trim.md).
+- **Before committing:** check the diff for comment blocks over 3 lines that the change added or grew, and trim any with [trim.md](trim.md).
+
+Example, a Go doc comment that narrates history and restates the code, trimmed to its purpose and the constraints only it states.
+
+Before:
+
+```go
+// ParseBallot parses the JSON form of a ballot.
+// It used to return nil on error. It now returns a wrapped error, so
+// callers can match it with errors.Is.
+// The function is pure: it reads no election state and takes no locks.
+// The vote handler calls it while holding the election lock, so it must
+// not block.
+// Choice values are checked against MaxChoices later, in validate.go.
+func ParseBallot(data []byte) (Ballot, error) {
+```
+
+After:
+
+```go
+// ParseBallot parses a ballot's JSON form without checking choices against
+// MaxChoices (see validate.go). The vote handler calls it under the election
+// lock, so it must not block.
+func ParseBallot(data []byte) (Ballot, error) {
+```
+
+**Related:** [[go-best-practices]], [[go-code-quality]].
