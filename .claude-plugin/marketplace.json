@@ -57,6 +57,16 @@
       "homepage": "https://github.com/vocdoni/skills"
     },
     {
+      "name": "vocdoni-comments",
+      "source": "./plugins/vocdoni-comments",
+      "description": "Code comment rules: 1-3 lines that carry the why, plus a trim procedure for a branch or a whole project that keeps every constraint only a comment states.",
+      "version": "0.1.0",
+      "category": "engineering",
+      "tags": ["comments", "code-comments", "code-quality", "code-review", "documentation"],
+      "license": "AGPL-3.0-or-later",
+      "homepage": "https://github.com/vocdoni/skills"
+    },
+    {
       "name": "vocdoni-sdk",
       "source": "./plugins/vocdoni-sdk",
       "description": "Exhaustive reference for the Vocdoni SDK (@vocdoni/sdk): client setup, accounts, every census type, all election variants (approval/ranked/multichoice/budget/quadratic), anonymous (ZK) voting, CSP, and Census3, with copy-pasteable runnable recipes.",

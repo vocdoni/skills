@@ -1,0 +1,21 @@
+{
+  "name": "vocdoni-comments",
+  "version": "0.1.0",
+  "description": "Vocdoni's code comment rules: comments of 1-3 lines that carry the why or a constraint the code can't show, never restated code, history or measurements. Includes a trim procedure, for a branch's added comments or a whole project or folder, that shortens long blocks without losing anything only the comment said, and reports where each dropped piece still lives.",
+  "author": {
+    "name": "Vocdoni",
+    "url": "https://vocdoni.io"
+  },
+  "homepage": "https://github.com/vocdoni/skills",
+  "repository": "https://github.com/vocdoni/skills",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "claude-code",
+    "skills",
+    "vocdoni",
+    "comments",
+    "code-comments",
+    "code-quality",
+    "code-review"
+  ]
+}
