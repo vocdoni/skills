@@ -1,5 +1,15 @@
 # @vocdoni/skills
 
+## 0.3.0
+
+### Minor Changes
+
+- [#46](https://github.com/vocdoni/skills/pull/46) [`bb4537e`](https://github.com/vocdoni/skills/commit/bb4537e070f4833baa5e00a4408737aa3fd5717e) Thanks [@elboletaire](https://github.com/elboletaire)! - New plugin `vocdoni-comments` (`npx @vocdoni/skills install --plugin comments`): its `comments` skill keeps code comments to 1-3 lines that carry the why, and trims existing ones, on a branch or across a whole project, without losing anything only the comment said.
+
+### Patch Changes
+
+- [#48](https://github.com/vocdoni/skills/pull/48) [`15777ee`](https://github.com/vocdoni/skills/commit/15777ee0899ec1d2137be2a7d9fe02b3f1465a60) Thanks [@elboletaire](https://github.com/elboletaire)! - pi-subagent 0.2.2 bundles zod 4 (fixing a memory-exhaustion advisory that has no zod 3 patch) and fast-uri 3.1.9 in its server. Tool inputs now cap `tools` at the seven built-in tools and `files` at 1000 entries. Under zod 4, validation error messages are reworded, integer inputs above 2^53-1 are rejected, and the advertised tool schemas no longer claim `additionalProperties: false`, which was never enforced since unknown keys are still stripped. Dev and transitive dependencies vitest, body-parser, ip-address, qs and @hono/node-server (1.x to 2.x) are also updated; none of them is part of the bundled server.
+
 ## 0.2.0
 
 ### Minor Changes
