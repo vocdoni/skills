@@ -1,0 +1,24 @@
+{
+  "name": "vocdoni-contributing",
+  "version": "0.1.0",
+  "description": "Vocdoni's rules for what the agent writes on the git host: who it introduces itself as, length and structure for PR/MR descriptions, issues, reviews and commits, and how to post a review as a review. A SessionStart hook injects the same rules into every Claude Code session, so they apply even when a PR is one step of a larger task.",
+  "author": {
+    "name": "Vocdoni",
+    "url": "https://vocdoni.io"
+  },
+  "homepage": "https://github.com/vocdoni/skills",
+  "repository": "https://github.com/vocdoni/skills",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "claude-code",
+    "skills",
+    "vocdoni",
+    "contributing",
+    "pull-request",
+    "merge-request",
+    "code-review",
+    "issues",
+    "commits",
+    "git-host"
+  ]
+}
