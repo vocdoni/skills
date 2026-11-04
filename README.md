@@ -18,6 +18,7 @@ claude plugin install vocdoni-internal-oauth@vocdoni
 claude plugin install vocdoni-ui-style@vocdoni
 claude plugin install agentic-dev@vocdoni
 claude plugin install vocdoni-comments@vocdoni
+claude plugin install vocdoni-contributing@vocdoni
 claude plugin install pi-subagent@vocdoni   # MCP server + agents — needs Pi (see its README)
 
 # Or grab everything in one shot (skill plugins only; pi-subagent is Claude Code-only)
@@ -105,6 +106,14 @@ The plugin also installs a **SessionStart hook** so the model loads the skill on
 | ---------- | -------------- |
 | `comments` | How to write code comments (doc, inline, JSDoc): 1-3 lines per block that say the why or a constraint the code can't show, without restating code, narrating history or repeating documented flows, and with claims that match the code. `trim.md` shortens existing comments, either the blocks a branch added (`/comments trim`) or every long block in a project or folder (`/comments trim project [path]`; a plugin install namespaces them as `/vocdoni-comments:comments trim`), keeping anything only the comment said and reporting where each dropped piece lives. |
 
+### 📝 `vocdoni-contributing` — what the agent posts on the git host
+
+| Skill          | What it covers |
+| -------------- | -------------- |
+| `contributing` | The rules for everything the agent writes on GitHub or GitLab: an opening line naming the model and the user it acts for, no `Co-authored-by` trailer, length limits and structure for PR/MR descriptions and issues, findings of about three sentences in reviews (nits marked "Nit:"), and reviews posted as reviews marked "Approve" or "Request changes". |
+
+The plugin also installs a **SessionStart hook** that injects the same `contributing` body into every Claude Code session, so the rules hold even when a PR is one step of a larger task and the skill's description never matches. The hook reads `skills/contributing/SKILL.md` directly, so the skill is the only place to edit. The hook is Claude Code-only; an npx install gets the skill, which still triggers from its description.
+
 ### 🤖 `pi-subagent` — delegate to Pi subagents
 
 Delegate work to **named [Pi][pi] subagents** — reusable personas, each with its own model and tools (including MCP tools) — and to bounded one-off coding tasks. Unlike the skill plugins above, this one bundles a local **MCP server** that launches Pi (`pi --mode rpc`), isolates code edits in a detached **git worktree**, and hands back a summary plus a diff to review. Changes are never applied automatically.
@@ -140,6 +149,7 @@ claude plugin install vocdoni-internal-oauth@vocdoni
 claude plugin install vocdoni-ui-style@vocdoni
 claude plugin install agentic-dev@vocdoni
 claude plugin install vocdoni-comments@vocdoni
+claude plugin install vocdoni-contributing@vocdoni
 claude plugin install pi-subagent@vocdoni   # see plugins/claude-pi-subagent/plugins/pi-subagent/README.md
 ```
 
@@ -147,6 +157,20 @@ Iterating locally? Point the marketplace at a checkout instead:
 
 ```sh
 claude plugin marketplace add /path/to/skills
+```
+
+To have a repo's contributors install the plugins, commit this as the repo's `.claude/settings.json`. Once a contributor trusts the folder, Claude Code registers the marketplace and enables these plugins:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "vocdoni": { "source": { "source": "github", "repo": "vocdoni/skills" } }
+  },
+  "enabledPlugins": {
+    "vocdoni-comments@vocdoni": true,
+    "vocdoni-contributing@vocdoni": true
+  }
+}
 ```
 
 ### npx (any client that reads a skills directory)
@@ -165,6 +189,7 @@ npx @vocdoni/skills install --plugin davinci-sdk      # full name (no vocdoni- p
 npx @vocdoni/skills install --plugin agentic-dev        # skill only; the SessionStart hook is Claude Code plugin-only
 npx @vocdoni/skills install --plugin ui-style           # 'ui-style' → 'vocdoni-ui-style'
 npx @vocdoni/skills install --plugin comments           # 'comments' → 'vocdoni-comments'
+npx @vocdoni/skills install --plugin contributing       # 'contributing' → 'vocdoni-contributing'; skill only, the SessionStart hook is Claude Code plugin-only
 
 # A single skill, looked up across plugins
 npx @vocdoni/skills install go-modern
@@ -206,6 +231,7 @@ claude plugin update vocdoni-go@vocdoni
 claude plugin update vocdoni-stripe@vocdoni
 claude plugin update agentic-dev@vocdoni
 claude plugin update vocdoni-comments@vocdoni
+claude plugin update vocdoni-contributing@vocdoni
 claude plugin update pi-subagent@vocdoni
 ```
 
@@ -256,6 +282,8 @@ Copy the skill directories again over the old ones, or `git pull` if you symlink
 │   ├── agentic-dev/                    # skill + SessionStart hook (hooks/)
 │   │   └── …
 │   ├── vocdoni-comments/
+│   │   └── …
+│   ├── vocdoni-contributing/           # skill + SessionStart hook (hooks/)
 │   │   └── …
 │   └── claude-pi-subagent/             # nested marketplace (pi-agent-tools)
 │       └── plugins/pi-subagent/        # MCP server plugin + agents — see its README
