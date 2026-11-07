@@ -60,6 +60,10 @@ name = "vocdoni-comments"
 marketplace = "vocdoni"
 
 [[plugin]]
+name = "vocdoni-contributing"
+marketplace = "vocdoni"
+
+[[plugin]]
 name = "agentic-dev"
 marketplace = "vocdoni"
 
