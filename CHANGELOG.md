@@ -1,5 +1,11 @@
 # @vocdoni/skills
 
+## 0.4.0
+
+### Minor Changes
+
+- [#49](https://github.com/vocdoni/skills/pull/49) [`d309023`](https://github.com/vocdoni/skills/commit/d309023e026d3eb52a726b096ebbb7791908dbbd) Thanks [@elboletaire](https://github.com/elboletaire)! - New plugin `vocdoni-contributing` (`npx @vocdoni/skills install --plugin contributing`): its `contributing` skill sets the rules for what the agent posts on GitHub or GitLab (PR and MR descriptions, issues, reviews and commits), and its SessionStart hook injects the same rules into every Claude Code session by reading the skill's SKILL.md.
+
 ## 0.3.0
 
 ### Minor Changes
