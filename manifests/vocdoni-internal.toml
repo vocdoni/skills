@@ -92,10 +92,6 @@ name = "vocdoni-integrator-sdk"
 marketplace = "vocdoni"
 
 [[plugin]]
-name = "firecrawl"
-marketplace = "claude-plugins-official"
-
-[[plugin]]
 name = "context7"
 marketplace = "claude-plugins-official"
 
@@ -125,6 +121,13 @@ type = "http"
 url = "https://kb-gw.vocdoni.net/mcp"
 headers = { Authorization = "Bearer ${VOCDONI_KB_TOKEN}" }
 secrets = ["VOCDONI_KB_TOKEN"]
+
+[[mcp]]
+name = "firecrawl"
+type = "http"
+url = "https://mcp.firecrawl.dev/v2/mcp"
+headers = { Authorization = "Bearer ${FIRECRAWL_API_KEY}", X-Firecrawl-Origin = "vocdoni-claudio" }
+secrets = ["FIRECRAWL_API_KEY"]
 
 [[mcp]]
 name = "jina-mcp-server"
@@ -214,14 +217,14 @@ Report (under 10 lines): files changed, the check and its result line, anything 
 name = "web-scout"
 description = "Haiku live-web lookup with firecrawl and jina; returns a short sourced answer with URLs and quoted strings. Use when the answer changes over time or lives on one web page: the latest release of a library, a CLI flag, a price or quota, an error message's known cause. Read-only. Use: 'latest stable Go release and its date, with the release-notes URL'. Not for library API docs that context7 covers, nor for papers or scholarly claims (academic-scout), nor for code changes."
 model = "haiku"
-tools = ["Read", "mcp__plugin_firecrawl_firecrawl", "mcp__jina-mcp-server"]
+tools = ["Read", "mcp__firecrawl", "mcp__jina-mcp-server"]
 prompt = """
 You look things up on the live web and report them with sources. You never change files, run commands or dispatch subagents; Read is only for a local file the caller points you to.
 
 Tools
 - firecrawl_search or jina search_web to find pages; firecrawl_scrape or jina read_url (with a focused question) to read one. Prefer official docs, release notes, repositories and primary pages over blogs and aggregators.
 - Call jina primer first when the answer depends on today's date (latest version, current price, whether something is still the case).
-- If a firecrawl tool is unavailable or errors (plugin not configured, credits exhausted), use the jina tools; if neither works, report that in one line and stop.
+- If a firecrawl tool is unavailable or errors (server not configured, credits exhausted), use the jina tools; if neither works, report that in one line and stop.
 
 Method
 1. One search, then open at most three pages that answer the question. Read the relevant part; do not dump whole pages.
@@ -239,7 +242,7 @@ Report (under 20 lines)
 name = "academic-scout"
 description = "Fable scholarly researcher on firecrawl's research index (arXiv, PubMed, bioRxiv, medRxiv) and jina. Use to verify a claim against the literature, find the primary paper behind a result, check that a citation says what is claimed, or survey a question (a cryptographic assumption, a voting-protocol property). Returns a verdict, full citations and strength of evidence. Read-only. Use: 'does the cited paper prove X under assumption Y'. Not for releases, prices or docs (web-scout), nor for code."
 model = "fable"
-tools = ["Read", "mcp__plugin_firecrawl_firecrawl", "mcp__jina-mcp-server"]
+tools = ["Read", "mcp__firecrawl", "mcp__jina-mcp-server"]
 prompt = """
 You research scholarly questions and verify claims against the literature. You never change files, run commands or dispatch subagents; Read is only for a local document the caller points you to.
 
@@ -247,7 +250,7 @@ Tools
 - firecrawl_research_search_papers: find papers (arXiv, PubMed, bioRxiv, medRxiv). jina search_arxiv: preprints, and the fallback search.
 - firecrawl_research_inspect_paper: a paper's metadata, abstract and sections before reading it. firecrawl_research_read_paper: the full-text passages you need. firecrawl_research_related_papers: the citation graph, to reach the primary source, replications or rebuttals.
 - firecrawl_search, firecrawl_scrape, jina read_url: context only (venue, retraction notices, a DOI landing page, an author's institution), never as the evidence itself.
-- If the firecrawl research tools are unavailable (plugin not configured, credits exhausted), work with jina search_arxiv and read_url and state in the report that coverage was limited to what jina reached.
+- If the firecrawl research tools are unavailable (server not configured, credits exhausted), work with jina search_arxiv and read_url and state in the report that coverage was limited to what jina reached.
 
 Method
 1. Restate the question or claim precisely, and what would count as support or refutation.
