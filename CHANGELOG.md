@@ -1,5 +1,15 @@
 # @vocdoni/skills
 
+## 0.5.0
+
+### Minor Changes
+
+- [#53](https://github.com/vocdoni/skills/pull/53) [`10316e7`](https://github.com/vocdoni/skills/commit/10316e7117c27f9c8520b6d0f68907b25898c324) Thanks [@p4u](https://github.com/p4u)! - New `manifests/vocdoni-internal.toml`, the Vocdoni team's claudio plugin manifest (format 1): claudio v0.7.0 fetches it from claude.vocdoni.net and installs the 17 plugins it lists (every plugin of this marketplace plus firecrawl, context7, remember, cloudflare, railway, playwright and folio), configures the vocdoni-kb, jina and hackmd MCP servers, defines the worker, fast-worker, reviewer, planner-verifier, web-scout, academic-scout and ui-tester subagents, and injects the team instructions (light path versus agentic-dev delivery path, how to use the subagents).
+
+### Patch Changes
+
+- [#54](https://github.com/vocdoni/skills/pull/54) [`abad17e`](https://github.com/vocdoni/skills/commit/abad17e0cb6e87f557db37282791e907150010be) Thanks [@p4u](https://github.com/p4u)! - `agentic-dev`: the SessionStart hook and the skill description now ask for the subagent-driven-development skill only for long work (many steps, several modules or repos, more than one session) or work touching a critical component (auth, secrets, payments, voting or ballot logic, cryptography, migrations, wire formats, deployments), plus the explicit triggers (spec, plan, audit, ledger, a `.delivery/` folder). Everything else, including multi-file changes in one module, takes the light path. This matches the Vocdoni team policy in the `vocdoni-internal` claudio manifest.
+
 ## 0.4.0
 
 ### Minor Changes
