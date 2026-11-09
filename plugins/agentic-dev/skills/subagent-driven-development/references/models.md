@@ -16,7 +16,7 @@ survives context compaction.
 
 | Model role | What the model must be good at | Skill roles that use it | Default | Agent tool `model` |
 |---|---|---|---|---|
-| **auditor model** | The strongest reasoning available: holding a spec, a plan and a whole-branch diff in mind at once, finding what the author missed, arguing soundness, concurrency and security. Speed and cost matter least. | Auditor and consultant | Fable 5.1 | `fable` |
+| **auditor model** | The strongest reasoning available: holding a spec, a plan and a whole-branch diff in mind at once, finding what the author missed, arguing soundness, concurrency and security. Speed and cost matter least. | Auditor and consultant | Fable 5.2 | `fable` |
 | **strong model** | Deep coding and reasoning at a moderate cost: long plans written against real code, subtle fixes, concurrency, cryptography, security paths. | Plan drafter, Hard fixer, implementers of security-sensitive tasks | Opus 5.5 | `opus` |
 | **standard model** | Reliable multi-file implementation and code reading at a low cost, following a precise brief. | Implementer, Code mapper | Sonnet 5.5 | `sonnet` |
 | **fast model** | Quick, cheap execution of fully specified edits: transcribing given code, renames, vendoring, single-file changes. | Mechanical implementer | Haiku 5.5 | `haiku` |
@@ -37,7 +37,7 @@ stronger, and steps 4 and 5 only apply when the default cannot be used.
 1. **The owner or the repo names a model.** An instruction from the owner, or a rule in the
    repo's CLAUDE.md or CONTRIBUTING, wins over everything below.
 2. **A newer version of the default exists.** Use the newest version in the default's family
-   (Fable 5.5 once it ships replaces Fable 5.1, Opus 6 replaces Opus 5.5). Family aliases such as
+   (Fable 5.5 once it ships replaces Fable 5.2, Opus 6 replaces Opus 5.5). Family aliases such as
    `fable` or `opus` in Claude Code's Agent tool normally resolve to the newest version the
    harness offers, so prefer the alias to a pinned model ID. Where the harness only takes full
    IDs, pick the highest version in the family. Check the model list in your environment or
@@ -76,7 +76,7 @@ pass as the Agent tool's `model`, plus the concrete version when you know it. Re
 placeholder line the script writes, including its hint:
 
 ```
-Models: auditor=fable (Fable 5.1)  strong=opus  standard=sonnet  fast=haiku
+Models: auditor=fable (Fable 5.2)  strong=opus  standard=sonnet  fast=haiku
 ```
 
 Always set the Agent tool's `model` from this line. If you leave it out, the subagent inherits
