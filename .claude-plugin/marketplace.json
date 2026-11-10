@@ -19,7 +19,7 @@
     {
       "name": "vocdoni-stripe",
       "source": "./plugins/vocdoni-stripe",
-      "description": "Stripe environments for Vocdoni development: one CLI profile per environment, checking the active account before writing, agent-safe CLI usage, and local webhooks with `stripe listen` against saas-backend, alone or with vocdoni-app.",
+      "description": "Stripe environments for Vocdoni development: the develop, stage, ci and live accounts as shared CLI profiles, checking the active account before writing, agent-safe CLI usage, and local webhooks with `stripe listen` against saas-backend, alone or with vocdoni-app.",
       "version": "0.2.0",
       "category": "engineering",
       "tags": ["vocdoni", "stripe", "stripe-cli", "webhooks", "sandbox", "local-development"],

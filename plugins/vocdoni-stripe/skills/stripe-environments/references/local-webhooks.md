@@ -2,7 +2,10 @@
 
 How to run the SaaS backend locally with real Stripe test payments: the
 backend alone, or the full stack with vocdoni-app. Everything here runs
-against the `local` profile's sandbox.
+against the `ci` profile (the "Auditore & CI" sandbox), which has no webhook
+endpoints of its own and already has its tax settings. Use another sandbox
+only if the user asks, and never `develop` or `stage` for a local stack:
+their webhooks would also reach the dev or staging API.
 
 ## What the backend needs from Stripe
 
@@ -14,17 +17,19 @@ against the `local` profile's sandbox.
   once.
 - A **tax origin address** in the sandbox (Dashboard → Settings → Tax). The
   backend creates checkout sessions with automatic tax, and Stripe refuses
-  them until the account has one. A new sandbox has none.
+  them until the account has one. `ci` has one; a new sandbox does not.
 
-The checkout sessions use inline `price_data`, so a new sandbox needs no
-products or prices.
+The checkout sessions use inline `price_data`, so no products or prices are
+needed.
 
 Check that the key and the listener point at the same account before
 debugging anything else:
 
 ```bash
-curl -s -u "$VOCDONI_STRIPEAPISECRET:" https://api.stripe.com/v1/account | jq -r .id
-stripe -p local get /v1/account </dev/null 2>/dev/null | sed '/^[{[]/,$!d' | jq -r .id
+# from the saas-backend checkout; the key is read from .env and never put on a command line
+curl -s -K <(printf 'user = "%s:"\n' "$(sed -n 's/^VOCDONI_STRIPEAPISECRET=//p' .env)") \
+  https://api.stripe.com/v1/account | jq -r '.id // .error.message'
+stripe -p ci whoami --format json </dev/null | jq -r .account_id
 ```
 
 The two ids must match.
@@ -35,7 +40,7 @@ From a saas-backend checkout:
 
 ```bash
 cp example.env .env                     # once; .env is gitignored
-stripe -p local listen --print-secret   # put the result in VOCDONI_STRIPEWEBHOOKSECRET
+stripe -p ci listen --print-secret </dev/null   # put the result in VOCDONI_STRIPEWEBHOOKSECRET
 ```
 
 Set both Stripe variables in `.env`, then start the stack. The profiles add
@@ -45,17 +50,21 @@ values they need.
 
 ```bash
 docker compose --profile with-vocone --profile local-smtp up -d
-stripe -p local listen --forward-to localhost:8080/payments/webhook
+stripe -p ci listen --forward-to localhost:8080/payments/webhook
 ```
 
-Keep the listener running for as long as you test; it prints one line per
-event with the backend's response code. `docker compose restart` does not
-re-read `.env`: after changing it, run `docker compose up -d` again so the
-`api` container is recreated.
+Keep the listener running for as long as you test; it prints the API version
+it delivers and one line per event with the backend's response code.
 
-Running the API outside Docker (`go run ./cmd/service`) works the same: the
-variables come from the environment, and the listener forwards to whatever
-port `VOCDONI_PORT` sets.
+`docker compose restart` does not re-read `.env`. After changing it, run the
+same `up -d` command again, **with the same `--profile` flags**, so the `api`
+container is recreated. Without them `api` is recreated but `fakesmtp`, which
+shares its network, stays attached to the removed container and the API
+stops reaching it.
+
+Running the API outside Docker (`go run ./cmd/service`) does not read `.env`;
+export the variables in that shell, and point `--forward-to` at the port
+`VOCDONI_PORT` sets (8080 by default).
 
 ## Full stack (backend and vocdoni-app)
 
@@ -89,9 +98,11 @@ Either way, the listener command is the same as for the backend alone.
 | `refund.created`, `refund.updated`                                     | records the refund                       |
 | `charge.dispute.funds_withdrawn`, `charge.dispute.funds_reinstated`    | records the dispute                      |
 
-Every other event, subscription and product events included, is acknowledged
-and ignored: the backend no longer has subscription plans. To keep the listener quiet, add
-`--events` with the types above.
+Every other event is acknowledged and ignored. On saas-backend `main`,
+subscription and product events are among them: plans and subscriptions were
+retired there. Staging and production still handle them until that release
+reaches them, through the separate `/subscriptions/webhook` endpoint. To keep
+the listener quiet, add `--events` with the types above.
 
 ## When the wallet is not credited
 
@@ -100,12 +111,16 @@ Read the listener's line for the event first, then the API log
 
 - **No line at all**: the listener is on another account than the key that
   created the checkout. Compare the account ids above.
-- **500, and the API log says the signature validation failed**:
+- **500 with `webhook signature validation failed: received event with API
+  version …`**: the signature is fine; the event's API version is not on
+  the release train of the backend's pinned stripe-go. An account's API
+  version cannot be moved back, so the fix is on the backend side: bump
+  stripe-go to the matching major, as saas-backend's
+  `docs/payg/payg-manual-testing.md` says. The version the listener
+  delivers is in its startup line.
+- **500 with any other `webhook signature validation failed`**:
   `VOCDONI_STRIPEWEBHOOKSECRET` is not the listener's secret, or the
   container still runs with the old `.env`. Recreate it.
-- **500, and the API log mentions the API version**: the backend accepts only
-  events on its stripe-go release train. Align the sandbox's API version in Workbench with
-  the one saas-backend pins (see `docs/payg/payg-manual-testing.md`).
 - **200 but nothing changed**: the event lacked the metadata the backend
   needs (an organization it does not know, a session it did not create) and
   was dropped on purpose; the API log says why. `stripe trigger` events are
@@ -113,6 +128,6 @@ Read the listener's line for the event first, then the API log
   wallet.
 
 To replay a real event after fixing the cause:
-`stripe -p local events resend evt_… </dev/null`. For a run without a
+`stripe -p ci events resend evt_… </dev/null`. For a run without a
 browser or a card, saas-backend ships `docs/payg/test-payg-flow.sh`, which
 signs the webhook itself.

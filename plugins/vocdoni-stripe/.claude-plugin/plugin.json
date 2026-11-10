@@ -1,7 +1,7 @@
 {
   "name": "vocdoni-stripe",
   "version": "0.2.0",
-  "description": "Stripe environments for Vocdoni development: one named Stripe CLI profile per environment (a personal sandbox for local stacks, the shared team sandbox wired to dev and staging, live for production), checking the active account before any write, the agent-safe forms of the CLI's interactive commands, and running Stripe webhooks locally with `stripe listen` against saas-backend, alone or with vocdoni-app.",
+  "description": "Stripe environments for Vocdoni development: the Develop, Stage and \"Auditore & CI\" sandboxes and live production, which backend each one feeds through its webhooks, shared Stripe CLI profile names (develop, stage, ci, live), checking the active account before any write, the agent-safe forms of the CLI's interactive commands, and running Stripe webhooks locally with `stripe listen` against saas-backend, alone or with vocdoni-app.",
   "author": {
     "name": "Vocdoni",
     "url": "https://vocdoni.io"

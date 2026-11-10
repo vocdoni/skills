@@ -76,7 +76,7 @@ Tooling we use internally for our own development workflow. Nothing stops you fr
 
 | Skill                 | What it covers |
 | --------------------- | -------------- |
-| `stripe-environments` | One named Stripe CLI profile per environment (personal sandbox for local stacks, the shared sandbox wired to dev and staging, live), checking the active account before any write, the agent-safe forms of the CLI's interactive commands, and local webhooks with `stripe listen` against saas-backend, alone or with vocdoni-app. |
+| `stripe-environments` | Vocdoni's Stripe environments as shared CLI profiles (`develop` and `stage` sandboxes wired to the dev and staging APIs, `ci` for local stacks and tests, `live`), checking the active account before any write, the agent-safe forms of the CLI's interactive commands, and local webhooks with `stripe listen` against saas-backend, alone or with vocdoni-app. |
 
 Requires `jq` and the [Stripe CLI](https://docs.stripe.com/stripe-cli).
 
