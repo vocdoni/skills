@@ -1,6 +1,6 @@
 ---
 name: contributing
-description: Use whenever writing or posting a pull request or merge request description, an issue, a code review, a review comment or a commit message, on GitHub, GitLab or any other git host, through gh, glab or the web, including as one step of a larger task. Sets how to introduce yourself as the agent acting for the user, length limits and structure for PRs, issues and reviews, and how to post a review.
+description: Use whenever starting work on a change in a repository, or writing or posting a pull request or merge request description, an issue, a code review, a review comment or a commit message, on GitHub, GitLab or any other git host, through gh, glab or the web, including as one step of a larger task. Sets how to tie the work to an issue (find it or open it first), how to introduce yourself as the agent acting for the user, length limits and structure for PRs, issues and reviews, and how to post a review.
 ---
 
 # Contributing
@@ -12,6 +12,12 @@ These rules cover everything you write on the git host for the user: pull or mer
 Start every PR description, issue, review and comment you post with one line saying which model you are and who you act for, such as "This is {model} speaking on behalf of {owner}." or "{model} here, on behalf of {owner}." `{owner}` is the login of the host CLI's user (`gh api user -q .login`, `glab api user | jq -r .username`), else `git config user.name`. Don't sign off at the end.
 
 Don't add a `Co-authored-by` trailer for yourself to commits. The person running you answers for the change.
+
+## Track the work in an issue
+
+Every change you branch, commit or open a PR for belongs to an issue. Before starting, look for one that already covers it: the issue the user named, one linked from the branch or an open PR, else a search of the repository's issues, closed ones included (`gh issue list --state all --search "<keywords>"`, `glab issue list --all --search "<keywords>"`). If one fits, use it, and comment on it if your work changes its scope. If none does, open one following the rules below before you open the PR, so the PR has something to link.
+
+Link the PR to the issue in its description: `Closes #N` when the PR finishes it, `Refs #N` when it is one part. Questions, reviews and other work that changes nothing need no issue. If the repository has issues disabled, or you cannot create one, say so and carry on without it.
 
 ## Pull requests
 

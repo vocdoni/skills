@@ -110,7 +110,7 @@ The plugin also installs a **SessionStart hook** so the model loads the skill on
 
 | Skill          | What it covers |
 | -------------- | -------------- |
-| `contributing` | The rules for everything the agent writes on GitHub or GitLab: an opening line naming the model and the user it acts for, no `Co-authored-by` trailer, length limits and structure for PR/MR descriptions and issues, findings of about three sentences in reviews (nits marked "Nit:"), and reviews posted as reviews marked "Approve" or "Request changes". |
+| `contributing` | The rules for everything the agent writes on GitHub or GitLab: every change tied to an issue, found or opened before the PR and linked from it, an opening line naming the model and the user it acts for, no `Co-authored-by` trailer, length limits and structure for PR/MR descriptions and issues, findings of about three sentences in reviews (nits marked "Nit:"), and reviews posted as reviews marked "Approve" or "Request changes". |
 
 The plugin also installs a **SessionStart hook** that injects the same `contributing` body into every Claude Code session, so the rules hold even when a PR is one step of a larger task and the skill's description never matches. The hook reads `skills/contributing/SKILL.md` directly, so the skill is the only place to edit. The hook is Claude Code-only; an npx install gets the skill, which still triggers from its description.
 
