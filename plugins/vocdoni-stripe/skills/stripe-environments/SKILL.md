@@ -25,9 +25,13 @@ or agent means the same thing for everyone:
 
 - **`ci` is the default for local work.** It has no webhook endpoints, so the
   only backend that hears its events is the one your own `stripe listen`
-  forwards to. Others share it: a listener also receives their events, which
-  the backend acknowledges and drops because it does not know the
-  organization.
+  forwards to. Others share it, so a listener also receives their events,
+  and the backend does not check that the organization exists: another
+  developer's or CI's completed top-up credits a wallet for their
+  organization in your local database, and their refunds debit it. Expect
+  stray wallets there and do not read totals across organizations; when
+  that matters, keep the listener running only while you test, or reset
+  the local database afterwards.
 - **`develop` and `stage` are not isolated.** A checkout, invoice, refund,
   product or subscription created there reaches the dev or staging API and
   changes real organizations, and deleting the object afterwards does not

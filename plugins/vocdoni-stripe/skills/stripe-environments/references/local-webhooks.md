@@ -27,8 +27,9 @@ debugging anything else:
 
 ```bash
 # from the saas-backend checkout; the key is read from .env and never put on a command line
-curl -s -K <(printf 'user = "%s:"\n' "$(sed -n 's/^VOCDONI_STRIPEAPISECRET=//p' .env)") \
-  https://api.stripe.com/v1/account | jq -r '.id // .error.message'
+key=$(grep -m1 '^VOCDONI_STRIPEAPISECRET=' .env | cut -d= -f2- | tr -d "\"'")
+printf 'user = "%s:"\n' "$key" | curl -s -K - https://api.stripe.com/v1/account \
+  | jq -r '.id // .error.message'
 stripe -p ci whoami --format json </dev/null | jq -r .account_id
 ```
 
@@ -113,17 +114,22 @@ Read the listener's line for the event first, then the API log
   created the checkout. Compare the account ids above.
 - **500 with `webhook signature validation failed: received event with API
   version …`**: the signature is fine; the event's API version is not on
-  the release train of the backend's pinned stripe-go. An account's API
-  version cannot be moved back, so the fix is on the backend side: bump
-  stripe-go to the matching major, as saas-backend's
-  `docs/payg/payg-manual-testing.md` says. The version the listener
-  delivers is in its startup line.
+  the release train of the backend's pinned stripe-go, older or newer.
+  Compare the version in the listener's startup line with the one in
+  saas-backend's `go.mod` (stripe-go's major) and
+  `docs/payg/payg-manual-testing.md`.
+  - The account is **ahead** of the backend: an account's version cannot be
+    moved back, so bump stripe-go to the matching major, as that doc says.
+  - The account is **behind**: restart the listener with `--latest`, which
+    formats events with the newest API version, when the backend pins the
+    newest train. Otherwise the account must be upgraded, which changes it
+    for everyone sharing it (CI included), so ask the user first.
 - **500 with any other `webhook signature validation failed`**:
   `VOCDONI_STRIPEWEBHOOKSECRET` is not the listener's secret, or the
   container still runs with the old `.env`. Recreate it.
 - **200 but nothing changed**: the event lacked the metadata the backend
-  needs (an organization it does not know, a session it did not create) and
-  was dropped on purpose; the API log says why. `stripe trigger` events are
+  needs (no top-up organization, a malformed address, a session it did not
+  create) and was dropped on purpose; the API log says why. `stripe trigger` events are
   like this: they carry no Vocdoni metadata, so they test delivery, not the
   wallet.
 
