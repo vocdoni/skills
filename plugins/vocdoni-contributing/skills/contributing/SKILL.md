@@ -1,11 +1,11 @@
 ---
 name: contributing
-description: Use whenever starting work on a change in a repository, or writing or posting a pull request or merge request description, an issue, a code review, a review comment or a commit message, on GitHub, GitLab or any other git host, through gh, glab or the web, including as one step of a larger task. Sets how to tie the work to an issue (find it or open it first), how to introduce yourself as the agent acting for the user, length limits and structure for PRs, issues and reviews, and how to post a review.
+description: Use whenever starting work on a change in a repository, or writing or posting a pull request or merge request description, an issue, a code review, a review comment or a commit message, on GitHub, GitLab or any other git host, through gh, glab or the web, including as one step of a larger task. Sets how to tie the work to an issue (find one, or open one before the PR), how to introduce yourself as the agent acting for the user, length limits and structure for PRs, issues and reviews, and how to post a review.
 ---
 
 # Contributing
 
-These rules cover everything you write on the git host for the user: pull or merge request descriptions, issues, reviews, review comments and commits.
+These rules cover the issue that tracks your work and everything you write on the git host for the user: pull or merge request descriptions, issues, reviews, review comments and commits.
 
 ## Introduce yourself
 
@@ -15,9 +15,9 @@ Don't add a `Co-authored-by` trailer for yourself to commits. The person running
 
 ## Track the work in an issue
 
-Every change you branch, commit or open a PR for belongs to an issue. Before starting, look for one that already covers it: the issue the user named, one linked from the branch or an open PR, else a search of the repository's issues, closed ones included (`gh issue list --state all --search "<keywords>"`, `glab issue list --all --search "<keywords>"`). If one fits, use it, and comment on it if your work changes its scope. If none does, open one following the rules below before you open the PR, so the PR has something to link.
+Every change that ends in a PR links to an issue, so the work can be found later and isn't done twice. When you start, look for one that already covers it: the issue the user named, one linked from the branch (a host development link, or a name like `58-fix-x`) or from its open PR, else a search of the repository's issues, closed ones included (`gh issue list --state all --search "<keywords>"`, `glab issue list --all --search "<keywords>"`). Reopen a fitting issue that was completed if the problem is back; if it was closed as not planned, tell the user before going on. If none fits, open one following the rules below just before you open the PR. When the work will not end in a PR, ask the user before opening an issue.
 
-Link the PR to the issue in its description: `Closes #N` when the PR finishes it, `Refs #N` when it is one part. Questions, reviews and other work that changes nothing need no issue. If the repository has issues disabled, or you cannot create one, say so and carry on without it.
+Link the issue from the PR description: `Closes #N` when the PR finishes it, `Refs #N` when it is one part. When an issue exists but there is no PR, put the same line in the final commit message. Questions, reviews and other work that changes nothing need no issue. If the repository has issues disabled, or you cannot search or create them, say so and carry on without one.
 
 ## Pull requests
 
