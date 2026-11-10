@@ -2,8 +2,8 @@
 # SessionStart hook for the vocdoni-contributing plugin.
 #
 # Injects the contributing skill body (SKILL.md without its YAML frontmatter) into every session, so the
-# rules for PR/MR descriptions, issues, reviews and commits apply even when they are one step of a larger
-# task and the skill's description never matches. Reads the body from SKILL.md so there is one source of truth.
+# rules for tracking work in an issue, PR/MR descriptions, issues, reviews and commits apply even when they
+# are one step of a larger task and the skill's description never matches. Reads the body from SKILL.md so there is one source of truth.
 #
 # Prints hookSpecificOutput JSON on stdout. Reads no input, writes nothing on error, never blocks, always exits 0.
 # Plain bash 3.2 so it runs on stock macOS.
@@ -29,7 +29,7 @@ json_escape() {
   printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e "s/$tab/\\\\t/g" | awk '{ printf "%s%s", (NR > 1 ? "\\n" : ""), $0 }'
 }
 
-msg="The vocdoni-contributing plugin is installed. Follow these rules whenever you write or post to the git host, even as one step of a larger task:
+msg="The vocdoni-contributing plugin is installed. Follow these rules whenever you start a change in a repository or write or post to the git host, even as one step of a larger task:
 
 $body"
 
