@@ -1,5 +1,13 @@
 # @vocdoni/skills
 
+## 0.5.1
+
+### Patch Changes
+
+- [#56](https://github.com/vocdoni/skills/pull/56) [`42183a7`](https://github.com/vocdoni/skills/commit/42183a7833098cb03cbca3a51a309b1c770f4689) Thanks [@p4u](https://github.com/p4u)! - `agentic-dev`: the auditor model's default is now Fable 5.2 (was 5.1) in the model table, the resolution example and the sample ledger `Models:` line. The Agent tool value stays `fable`.
+
+- [#59](https://github.com/vocdoni/skills/pull/59) [`3c42351`](https://github.com/vocdoni/skills/commit/3c42351fbbbcf3a8ae4a16d2a7dd7284b8d2588a) Thanks [@elboletaire](https://github.com/elboletaire)! - `vocdoni-contributing` 0.2.0: the `contributing` skill now ties every change to an issue. The agent looks for an existing issue first, opens one if none fits, and links the PR to it with `Closes #N` or `Refs #N`.
+
 ## 0.5.0
 
 ### Minor Changes
