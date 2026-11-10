@@ -72,13 +72,13 @@ Tooling we use internally for our own development workflow. Nothing stops you fr
 | `go-code-quality`    | Production checklist: domain types, error contracts, context, goroutines. |
 | `go-modern`          | Version-aware modern Go syntax. Reads `go.mod` to pick the right target.  |
 
-### 💳 `vocdoni-stripe` — Stripe operations for the SaaS
+### 💳 `vocdoni-stripe` — Stripe environments for development
 
-| Skill                 | What it covers                                                                                                                                                                                                                          |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stripe-subscription` | Create a subscription for an existing customer through the Stripe CLI (or MCP): prompts for the minimum inputs, clones per-customer *Custom* / *Integrator Starter* plan products, handles discounts and collection, confirms before writing. |
+| Skill                 | What it covers |
+| --------------------- | -------------- |
+| `stripe-environments` | One named Stripe CLI profile per environment (personal sandbox for local stacks, the shared sandbox wired to dev and staging, live), checking the active account before any write, the agent-safe forms of the CLI's interactive commands, and local webhooks with `stripe listen` against saas-backend, alone or with vocdoni-app. |
 
-Requires `jq` and either the [Stripe CLI](https://docs.stripe.com/stripe-cli) with a started session (`stripe login`, then `stripe agent setup` for its own skill) or a Stripe MCP server.
+Requires `jq` and the [Stripe CLI](https://docs.stripe.com/stripe-cli).
 
 ### 🔑 `vocdoni-internal-oauth` — staff sign-in for internal tools
 
