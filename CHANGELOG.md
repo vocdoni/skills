@@ -1,5 +1,11 @@
 # @vocdoni/skills
 
+## 0.5.2
+
+### Patch Changes
+
+- [#62](https://github.com/vocdoni/skills/pull/62) [`5fea614`](https://github.com/vocdoni/skills/commit/5fea614c1e92f84a987a1154481554b9a3bb6882) Thanks [@elboletaire](https://github.com/elboletaire)! - `vocdoni-contributing` 0.3.0: the `contributing` skill now covers epics that take several PRs. The agent stacks them, each PR targeting the one before it, and manages the stack with `gh stack`, so a fully reviewed stack is merged in one operation instead of squashing each PR and rebasing the rest.
+
 ## 0.5.1
 
 ### Patch Changes
