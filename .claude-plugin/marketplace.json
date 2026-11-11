@@ -69,8 +69,8 @@
     {
       "name": "vocdoni-contributing",
       "source": "./plugins/vocdoni-contributing",
-      "description": "Rules for what the agent posts on the git host: self-introduction, length and structure for PR/MR descriptions, issues and reviews, and posting reviews as reviews. A SessionStart hook applies them in every session, even as one step of a larger task.",
-      "version": "0.2.0",
+      "description": "Rules for what the agent posts on the git host: self-introduction, issue tracking, stacked PRs for epics, length and structure for PR/MR descriptions, issues and reviews, and posting reviews as reviews. A SessionStart hook applies them in every session, even as one step of a larger task.",
+      "version": "0.3.0",
       "category": "engineering",
       "tags": ["vocdoni", "pull-request", "merge-request", "code-review", "issues", "commits", "git-host"],
       "license": "AGPL-3.0-or-later",
