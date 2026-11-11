@@ -1,7 +1,7 @@
 {
   "name": "vocdoni-contributing",
-  "version": "0.2.0",
-  "description": "Vocdoni's rules for what the agent writes on the git host: tying each change to an issue (found, or opened before the PR), who it introduces itself as, length and structure for PR/MR descriptions, issues, reviews and commits, and how to post a review as a review. A SessionStart hook injects the same rules into every Claude Code session, so they apply even when a PR is one step of a larger task.",
+  "version": "0.3.0",
+  "description": "Vocdoni's rules for what the agent writes on the git host: tying each change to an issue (found, or opened before the PR), stacking an epic's PRs with gh stack, who it introduces itself as, length and structure for PR/MR descriptions, issues, reviews and commits, and how to post a review as a review. A SessionStart hook injects the same rules into every Claude Code session, so they apply even when a PR is one step of a larger task.",
   "author": {
     "name": "Vocdoni",
     "url": "https://vocdoni.io"

@@ -1,6 +1,6 @@
 ---
 name: contributing
-description: Use whenever starting work on a change in a repository, or writing or posting a pull request or merge request description, an issue, a code review, a review comment or a commit message, on GitHub, GitLab or any other git host, through gh, glab or the web, including as one step of a larger task. Sets how to tie the work to an issue (find one, or open one before the PR), how to introduce yourself as the agent acting for the user, length limits and structure for PRs, issues and reviews, and how to post a review.
+description: Use whenever starting work on a change in a repository, or writing or posting a pull request or merge request description, an issue, a code review, a review comment or a commit message, on GitHub, GitLab or any other git host, through gh, glab or the web, including as one step of a larger task, and when an epic issue needs several pull requests. Sets how to tie the work to an issue (find one, or open one before the PR), how to stack an epic's PRs on each other with gh stack instead of opening them all against the base branch, how to introduce yourself as the agent acting for the user, length limits and structure for PRs, issues and reviews, and how to post a review.
 ---
 
 # Contributing
@@ -22,6 +22,22 @@ Link the issue from the PR description: `Closes #N` when the PR finishes it, `Re
 ## Pull requests
 
 Keep descriptions under ~15 lines of markdown, code blocks included: what changed and why, any non-obvious decisions, how it was tested, and **one** usage example if the change has a user-facing surface. Skip anything the diff or README already says.
+
+## Epics: stack the PRs
+
+When an issue is an epic that takes several PRs, stack them: the first PR targets the base branch (`main`, `develop`) and each later one targets the branch of the PR before it. Don't open them all against the base branch: each then repeats or conflicts with the others' changes, reviewers can't see what is new in each, and every merge forces a rebase of the rest. Keep each PR to one reviewable step, and link the epic from each with `Refs #N`.
+
+On GitHub, manage the stack with the `gh stack` extension (`gh extension install github/gh-stack`) rather than chaining bases by hand:
+
+```sh
+gh stack init --base develop epic-1-api   # first branch, on the base branch
+gh stack add epic-2-ui                    # each next branch, on top of the last
+gh stack submit                           # push all, open or retarget the PRs, link them as a stack
+gh stack rebase                           # after fixing a lower PR, cascade the change up
+gh stack merge --squash                   # once the whole stack is approved
+```
+
+`gh stack merge` merges every PR up to the one you pick into the base branch in one all-or-nothing operation, so you never squash one PR and then rebase and retarget each one above it. Merge only once every PR being merged is reviewed. To turn branches already open against the base branch into a stack, `gh stack init --base <base> <branch>...` adopts them bottom to top; then `gh stack rebase` and `gh stack submit`. Without the extension, or on GitLab, set each PR's base to the previous branch (`gh pr create --base <prev>`, `glab mr create --target-branch <prev>`) and merge from the bottom up, rebasing the rest after each merge.
 
 ## Issues
 
