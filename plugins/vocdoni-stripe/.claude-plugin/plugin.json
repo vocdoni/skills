@@ -1,7 +1,7 @@
 {
   "name": "vocdoni-stripe",
-  "version": "0.1.1",
-  "description": "Stripe operations for the Vocdoni SaaS, run through the Stripe CLI (or a Stripe MCP server). Creates subscriptions for existing customers with the org-address metadata the backend needs, clones per-customer Custom / Integrator Starter plan products from the catalog templates, handles discounts and payment collection, and always confirms before writing. Ships an environment-guarding CLI wrapper, a product-cloning script and a verified reference of what the SaaS backend reads from Stripe.",
+  "version": "0.2.0",
+  "description": "Stripe environments for Vocdoni development: the Develop, Stage and \"Auditore & CI\" sandboxes and live production, which backend each one feeds through its webhooks, shared Stripe CLI profile names (develop, stage, ci, live), checking the active account before any write, the agent-safe forms of the CLI's interactive commands, and running Stripe webhooks locally with `stripe listen` against saas-backend, alone or with vocdoni-app.",
   "author": {
     "name": "Vocdoni",
     "url": "https://vocdoni.io"
@@ -14,9 +14,9 @@
     "skills",
     "vocdoni",
     "stripe",
-    "billing",
-    "subscriptions",
-    "saas",
-    "stripe-cli"
+    "stripe-cli",
+    "webhooks",
+    "sandbox",
+    "local-development"
   ]
 }
