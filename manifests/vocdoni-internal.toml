@@ -51,6 +51,10 @@ source = "github:anthropics/claude-plugins-official"
 name = "folio"
 source = "github:vocdoni/folio"
 
+[[marketplace]]
+name = "ponytail"
+source = "github:DietrichGebert/ponytail"
+
 [[plugin]]
 name = "vocdoni-go"
 marketplace = "vocdoni"
@@ -114,6 +118,10 @@ marketplace = "claude-plugins-official"
 [[plugin]]
 name = "folio"
 marketplace = "folio"
+
+[[plugin]]
+name = "ponytail"
+marketplace = "ponytail"
 
 [[mcp]]
 name = "vocdoni-kb"
