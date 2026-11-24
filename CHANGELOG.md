@@ -1,5 +1,15 @@
 # @vocdoni/skills
 
+## 0.5.3
+
+### Patch Changes
+
+- [#69](https://github.com/vocdoni/skills/pull/69) [`fb3c5a7`](https://github.com/vocdoni/skills/commit/fb3c5a7a8bac06eda893b8d87c75d8d57210ec04) Thanks [@elboletaire](https://github.com/elboletaire)! - `vocdoni-contributing` 0.4.0: when the agent answers review comments on its own PR, it replies in each thread and resolves it through the API (GitHub GraphQL `resolveReviewThread`, GitLab discussions), whether it made the fix or explained why it won't.
+
+- [#72](https://github.com/vocdoni/skills/pull/72) [`62f928e`](https://github.com/vocdoni/skills/commit/62f928ee5a67d43dd1e065bca6aff7ec50f01054) Thanks [@elboletaire](https://github.com/elboletaire)! - `bin/install.js` now exports its helpers for tests and only runs the CLI when executed directly, reads CRLF SKILL.md frontmatter, and no longer scans a plugin's subdirectories for skills when its root has no SKILL.md. New `node:test` suite (`npm test`) and PR CI cover the installer and the pi-subagent server.
+
+- [#72](https://github.com/vocdoni/skills/pull/72) [`62f928e`](https://github.com/vocdoni/skills/commit/62f928ee5a67d43dd1e065bca6aff7ec50f01054) Thanks [@elboletaire](https://github.com/elboletaire)! - Bump transitive `hono` and `@hono/node-server` in pi-subagent's lockfile to patched versions.
+
 ## 0.5.2
 
 ### Patch Changes
