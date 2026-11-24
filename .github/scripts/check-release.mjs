@@ -5,8 +5,9 @@
 //
 // Fails (exit 1) when:
 //   - a tag is given and it is not v<package.json version>;
-//   - a local marketplace entry has no plugin.json, or disagrees with it on
-//     name, license or version (CLAUDE.md: they must stay in lockstep);
+//   - a local marketplace entry has no plugin.json, declares no version, or
+//     disagrees with it on name, license or version (CLAUDE.md: lockstep);
+//   - a skills/<dir> under a local plugin has no SKILL.md;
 //   - a remote marketplace entry declares a version (it would mask the remote
 //     plugin.json);
 //   - a plugin under plugins/ is missing from marketplace.json (the npx CLI
