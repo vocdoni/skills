@@ -142,9 +142,14 @@ node bin/install.js install --plugin go --dest /tmp/skills-test --force
 
 # Install one skill, as a symlink into your real Claude Code config (live updates)
 node bin/install.js install my-skill --symlink --force
+
+# Installer test suite (node:test, offline, temp HOME)
+npm test
 ```
 
 Restart your Claude Code session to pick up changes when not using `--symlink`.
+
+PRs run CI (`.github/workflows/ci.yml`). It fails when the pi-subagent `dist/server.mjs` differs from a rebuild, so rebuild and commit it after changing that plugin's `src/`.
 
 ## Releasing
 
