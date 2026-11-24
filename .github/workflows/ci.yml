@@ -24,7 +24,7 @@ jobs:
       - name: Setup NodeJS
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24.x
           cache: npm
 
       - name: Install dependencies
@@ -33,6 +33,9 @@ jobs:
       ## Offline: the CI runner must never fetch remote plugins.
       - name: Lint marketplace
         run: npm run lint -- --offline
+
+      - name: Check release metadata
+        run: node .github/scripts/check-release.mjs
 
       - name: Test
         run: npm test
@@ -50,7 +53,7 @@ jobs:
       - name: Setup NodeJS
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24.x
           cache: npm
           cache-dependency-path: plugins/claude-pi-subagent/plugins/pi-subagent/package-lock.json
 

@@ -110,9 +110,9 @@ function readSkillMeta(skillDir) {
   const meta = { name: '', description: '' };
   try {
     const src = fs.readFileSync(path.join(skillDir, 'SKILL.md'), 'utf8');
-    const m = src.match(/^---\s*\n([\s\S]*?)\n---/);
+    const m = src.match(/^---\s*\r?\n([\s\S]*?)\r?\n---/);
     if (!m) return meta;
-    for (const line of m[1].split('\n')) {
+    for (const line of m[1].split(/\r?\n/)) {
       const kv = line.match(/^(name|description):\s*(.*)$/);
       if (kv) meta[kv[1]] = kv[2].replace(/^['"]|['"]$/g, '');
     }
@@ -185,8 +185,11 @@ function skillsFromManifest(manifest, rootDir) {
     }
   } else {
     add(collectSkillsAtPath(path.join(rootDir, 'skills')));
-    // Plugin with a single SKILL.md at its root and no skills/ directory.
-    if (skills.length === 0) add(collectSkillsAtPath(rootDir, manifest.name));
+    // Plugin with a single SKILL.md at its root and no skills/ directory. Only
+    // the root file counts: scanning the root would also pick up subdirectories.
+    if (skills.length === 0 && fs.existsSync(path.join(rootDir, 'SKILL.md'))) {
+      add(collectSkillsAtPath(rootDir, manifest.name));
+    }
   }
 
   skills.sort((a, b) => a.name.localeCompare(b.name));
@@ -504,7 +507,7 @@ function main(argv) {
 }
 
 if (require.main === module) {
-  process.exit(main(process.argv.slice(2)));
+  process.exitCode = main(process.argv.slice(2));
 }
 
 module.exports = {

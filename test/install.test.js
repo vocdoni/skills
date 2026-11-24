@@ -1,6 +1,6 @@
 'use strict';
 
-const { test, describe, before, after } = require('node:test');
+const { test, describe, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -10,7 +10,13 @@ const { spawnSync } = require('node:child_process');
 const REPO_ROOT = path.resolve(__dirname, '..');
 const BIN = path.join(REPO_ROOT, 'bin', 'install.js');
 const PLUGINS_DIR = path.join(REPO_ROOT, 'plugins');
-const MARKETPLACE_FILE = path.join(REPO_ROOT, '.claude-plugin', 'marketplace.json');
+
+// install.js reads HOME when it loads (CACHE_DIR, DEFAULT_DEST), so point it at
+// a temp dir first: in-process calls must never touch the real cache or ~/.claude.
+const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vocdoni-skills-test-'));
+process.env.HOME = path.join(tmpRoot, 'home');
+process.env.USERPROFILE = process.env.HOME;
+fs.mkdirSync(process.env.HOME);
 
 const {
   parseArgs,
@@ -21,12 +27,6 @@ const {
   resolvePluginName,
   discoverPlugins,
 } = require(BIN);
-
-let tmpRoot;
-
-before(() => {
-  tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vocdoni-skills-test-'));
-});
 
 after(() => {
   fs.rmSync(tmpRoot, { recursive: true, force: true });
@@ -132,6 +132,18 @@ describe('readSkillMeta', () => {
     assert.equal(readSkillMeta(dir).name, 'real');
   });
 
+  test('parses CRLF line endings', () => {
+    const dir = tmpDir('crlf');
+    writeFile(
+      path.join(dir, 'SKILL.md'),
+      '---\r\nname: crlf-skill\r\ndescription: Has CRLF.\r\n---\r\n\r\nBody.\r\n',
+    );
+    assert.deepEqual(readSkillMeta(dir), {
+      name: 'crlf-skill',
+      description: 'Has CRLF.',
+    });
+  });
+
   test('returns empty fields when there is no frontmatter', () => {
     const dir = tmpDir('nofm');
     writeFile(path.join(dir, 'SKILL.md'), '# Just a heading\n');
@@ -190,6 +202,12 @@ describe('skillsFromManifest', () => {
     const skills = skillsFromManifest({ name: 'plug' }, root);
     assert.deepEqual(skills.map((s) => s.name), ['single-root']);
     assert.equal(skills[0].dir, root);
+  });
+
+  test('does not scan plugin subdirectories when the root has no SKILL.md', () => {
+    const root = tmpDir('decoy');
+    writeSkill(path.join(root, 'examples'), 'decoy');
+    assert.deepEqual(skillsFromManifest({ name: 'plug' }, root), []);
   });
 
   test('ignores declared paths that escape the plugin root', () => {
@@ -372,40 +390,4 @@ describe('CLI end to end', () => {
     assert.equal(r.status, 0, r.stderr);
     assert.equal(fs.existsSync(path.join(dest, 'go-modern')), false);
   });
-});
-
-describe('repository integrity', () => {
-  const marketplace = JSON.parse(fs.readFileSync(MARKETPLACE_FILE, 'utf8'));
-  const localPluginDirs = fs
-    .readdirSync(PLUGINS_DIR, { withFileTypes: true })
-    .filter((e) => e.isDirectory())
-    .map((e) => path.join(PLUGINS_DIR, e.name))
-    .filter((dir) => fs.existsSync(path.join(dir, '.claude-plugin', 'plugin.json')));
-
-  test('there are local plugins to check', () => {
-    assert.ok(localPluginDirs.length > 0);
-  });
-
-  for (const dir of localPluginDirs) {
-    const manifest = JSON.parse(
-      fs.readFileSync(path.join(dir, '.claude-plugin', 'plugin.json'), 'utf8'),
-    );
-
-    test(`${manifest.name} matches its marketplace entry`, () => {
-      const entry = marketplace.plugins.find((p) => p.name === manifest.name);
-      assert.ok(entry, `${manifest.name} is missing from .claude-plugin/marketplace.json`);
-      assert.equal(entry.license, manifest.license, 'license');
-      assert.equal(entry.version, manifest.version, 'version');
-    });
-
-    test(`${manifest.name} skill directories match their SKILL.md name`, () => {
-      const skillsDir = path.join(dir, 'skills');
-      if (!fs.existsSync(skillsDir)) return;
-      for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
-        if (!entry.isDirectory()) continue;
-        const { name } = readSkillMeta(path.join(skillsDir, entry.name));
-        assert.equal(name, entry.name, `skills/${entry.name}/SKILL.md name`);
-      }
-    });
-  }
 });
