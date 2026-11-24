@@ -507,7 +507,7 @@ function main(argv) {
 }
 
 if (require.main === module) {
-  process.exitCode = main(process.argv.slice(2));
+  process.exit(main(process.argv.slice(2)));
 }
 
 module.exports = {
