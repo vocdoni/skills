@@ -1,0 +1,72 @@
+name: CI
+
+## Runs on every pull request and on pushes to main. Two jobs: the root package
+## (the installer CLI and its node:test suite) and the pi-subagent MCP server
+## (typecheck, tests, and a rebuild that must match the committed dist/server.mjs).
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  root:
+    name: Installer and marketplace
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      ## Offline: the CI runner must never fetch remote plugins.
+      - name: Lint marketplace
+        run: npm run lint -- --offline
+
+      - name: Test
+        run: npm test
+
+  pi-subagent:
+    name: pi-subagent MCP server
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/claude-pi-subagent/plugins/pi-subagent
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: plugins/claude-pi-subagent/plugins/pi-subagent/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      ## dist/server.mjs is committed because .mcp.json runs it directly, so a
+      ## rebuild that differs from the committed bundle means src/ and dist/ drifted.
+      - name: Build
+        run: npm run build
+
+      - name: Committed bundle matches a rebuild
+        run: git diff --exit-code -- dist/server.mjs

@@ -503,4 +503,18 @@ function main(argv) {
   }
 }
 
-process.exit(main(process.argv.slice(2)));
+if (require.main === module) {
+  process.exit(main(process.argv.slice(2)));
+}
+
+module.exports = {
+  parseArgs,
+  readSkillMeta,
+  collectSkillsAtPath,
+  skillsFromManifest,
+  resolveRemoteSource,
+  isRemoteSource,
+  resolvePluginName,
+  discoverPlugins,
+  main,
+};
