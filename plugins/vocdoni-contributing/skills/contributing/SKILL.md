@@ -1,6 +1,6 @@
 ---
 name: contributing
-description: Use whenever starting work on a change in a repository, or writing or posting a pull request or merge request description, an issue, a code review, a review comment or a commit message, on GitHub, GitLab or any other git host, through gh, glab or the web, including as one step of a larger task, and when an epic issue needs several pull requests. Sets how to tie the work to an issue (find one, or open one before the PR), how to stack an epic's PRs on each other with gh stack instead of opening them all against the base branch, how to introduce yourself as the agent acting for the user, length limits and structure for PRs, issues and reviews, and how to post a review.
+description: Use whenever starting work on a change in a repository, or writing or posting a pull request or merge request description, an issue, a code review, a review comment or a commit message, or answering review comments on a pull request, on GitHub, GitLab or any other git host, through gh, glab or the web, including as one step of a larger task, and when an epic issue needs several pull requests. Sets how to tie the work to an issue (find one, or open one before the PR), how to stack an epic's PRs on each other with gh stack instead of opening them all against the base branch, how to introduce yourself as the agent acting for the user, length limits and structure for PRs, issues and reviews, how to post a review, and how to reply to and resolve the review threads you address.
 ---
 
 # Contributing
@@ -48,3 +48,20 @@ Keep issues under ~15 lines of markdown too, code blocks included. Open with the
 Each finding takes about three sentences: what's wrong, what it breaks, and the fix. Don't walk through every step of the reasoning or restate what the diff shows. Mark nits with "Nit:" and keep them shorter still. The review's summary body follows the same rule.
 
 Post a review you were asked to publish as a review, not as a plain comment, and mark it "Approve" or "Request changes" depending on its outcome (on GitLab: approve, or leave the blocking threads unresolved). Write a bare `@name` only for a real login you mean to notify.
+
+When you answer review comments on your own PR, close each thread you handled: reply in it with the fix (the commit, or one line on what changed) or with why you are not making the change, then resolve it. Resolve it either way, so the user doesn't have to resolve every thread by hand. Leave threads you didn't handle open, and never resolve threads on a PR you are reviewing. These thread replies skip the introduction line. On GitHub, resolving takes the GraphQL API:
+
+```sh
+# unresolved threads on PR N, with their IDs
+gh api graphql -F owner='{owner}' -F repo='{repo}' -F pr=N -f query='
+  query($owner:String!,$repo:String!,$pr:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$pr){
+    reviewThreads(first:100){nodes{id isResolved path line comments(first:1){nodes{body}}}}}}}' \
+  --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved | not)'
+# reply in a thread, then resolve it
+gh api graphql -F id=PRRT_xxx -f body='Fixed in abc1234.' -f query='
+  mutation($id:ID!,$body:String!){addPullRequestReviewThreadReply(input:{pullRequestReviewThreadId:$id,body:$body}){comment{id}}}'
+gh api graphql -F id=PRRT_xxx -f query='
+  mutation($id:ID!){resolveReviewThread(input:{threadId:$id}){thread{isResolved}}}'
+```
+
+On GitLab, reply with `glab api -X POST "projects/:id/merge_requests/N/discussions/<discussion_id>/notes" -f body='...'`, then resolve with `glab api -X PUT "projects/:id/merge_requests/N/discussions/<discussion_id>?resolved=true"`.
