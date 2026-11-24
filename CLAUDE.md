@@ -64,7 +64,12 @@ node bin/install.js install --dest /tmp/skills-test --dry-run
 
 # Author a skill with live updates into real config
 node bin/install.js install <skill> --symlink --force
+
+# node:test suite for bin/install.js (offline, temp HOME)
+npm test
 ```
+
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`. The root job runs `npm run lint -- --offline`, `check-release.mjs` and `npm test`; the pi-subagent job runs `npm ci`, typecheck, test and build, and fails if `dist/server.mjs` differs from the rebuild.
 
 The `pi-subagent` plugin is a real TypeScript package (see below); the other plugins are pure Markdown and have no build step. `vocdoni-ui-style` also ships static assets (CSS/TS token files, TSX components, SVG logos, WebP screenshots, HTML examples, a zero-dependency `scripts/check-style.mjs`); they are copied, never built. `agentic-dev` also ships a `hooks/hooks.json` SessionStart hook (a bash script, no build), and `vocdoni-contributing` ships one that reads its own SKILL.md body (frontmatter stripped) into every session, so the hook never duplicates the rules. Hooks are Claude Code plugin-only; `bin/install.js` copies skills, never hooks. `agentic-dev`'s name is generic on purpose (not `vocdoni-<topic>`); `--plugin agentic-dev` resolves by exact name.
 
@@ -72,12 +77,12 @@ The `pi-subagent` plugin is a real TypeScript package (see below); the other plu
 
 `plugins/claude-pi-subagent/` is itself a marketplace (`.claude-plugin/marketplace.json`, owner "pi-agent-tools") wrapping a single plugin at `plugins/claude-pi-subagent/plugins/pi-subagent/`. That double nesting is why its `source` in the root marketplace is the deep path. It is the only plugin with code: an MCP server (`@modelcontextprotocol/sdk` + `zod`, ESM, Node ≥20) that launches Pi (`pi --mode rpc`), isolates edits in detached git worktrees, and returns diffs without applying them.
 
-Build/test from `plugins/claude-pi-subagent/plugins/pi-subagent/`:
+Build/test from `plugins/claude-pi-subagent/plugins/pi-subagent/` (not the repo root; its `npm test` is vitest, the root one is node:test):
 
 ```sh
 npm run build       # tsup → dist/server.mjs (committed; .mcp.json points at it)
 npm run typecheck   # tsc --noEmit
-npm test            # vitest run
+npm test            # vitest run (from this dir only)
 npx vitest run test/path-safety.test.ts   # single test file
 ```
 
@@ -93,7 +98,7 @@ npx vitest run test/path-safety.test.ts   # single test file
 
 ## Releasing
 
-A changed plugin's `version` is bumped in lockstep in its `plugin.json` and its `.claude-plugin/marketplace.json` entry, by hand; marketplace users get it when it merges to `main`. Changesets never touches plugin versions.
+A changed plugin's `version` is bumped in lockstep in its `plugin.json` and its `.claude-plugin/marketplace.json` entry, by hand; marketplace users get it when it merges to `main`. Changesets never touches plugin versions. `check-release.mjs` also fails when a local marketplace entry has no `version`, or a `skills/<dir>` has no SKILL.md; CI runs it on every PR.
 
 npm is versioned with Changesets (`@vocdoni/skills` only). Any PR that changes what ships in the package (`bin/`, `plugins/`, `.claude-plugin/marketplace.json`, `README.md`) adds a changeset via `npx changeset`. `.github/workflows/release.yml` runs on every push to `main`: it opens or updates the release PR (`chore(release): version @vocdoni/skills`) while changesets are pending, and once that PR is merged it runs `npm run release` (`check-release.mjs`, then `changeset publish`) and creates the GitHub release. Publishing uses npm trusted publishing (OIDC, no token); pre-releases go to the `next` dist-tag via `changeset pre enter next`. Never run `npm publish` by hand except for the one-time bootstrap described in CONTRIBUTING.md.
 
