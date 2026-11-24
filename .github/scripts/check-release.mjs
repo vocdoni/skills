@@ -5,8 +5,9 @@
 //
 // Fails (exit 1) when:
 //   - a tag is given and it is not v<package.json version>;
-//   - a local marketplace entry has no plugin.json, or disagrees with it on
-//     name, license or version (CLAUDE.md: they must stay in lockstep);
+//   - a local marketplace entry has no plugin.json, declares no version, or
+//     disagrees with it on name, license or version (CLAUDE.md: lockstep);
+//   - a skills/<dir> under a local plugin has no SKILL.md;
 //   - a remote marketplace entry declares a version (it would mask the remote
 //     plugin.json);
 //   - a plugin under plugins/ is missing from marketplace.json (the npx CLI
@@ -45,10 +46,18 @@ for (const entry of marketplace.plugins) {
     continue;
   }
   const manifest = readJSON(file);
+  if (!entry.version) fail(`${entry.name}: local marketplace entry must declare a version`);
   for (const field of ['name', 'license', 'version']) {
-    if (field === 'version' && !entry.version) continue;
     if (manifest[field] !== entry[field]) {
       fail(`${entry.name}: ${field} is ${JSON.stringify(entry[field])} in marketplace.json but ${JSON.stringify(manifest[field])} in ${file}`);
+    }
+  }
+  const skillsDir = path.join(root, dir, 'skills');
+  if (fs.existsSync(skillsDir)) {
+    for (const e of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+      if (e.isDirectory() && !fs.existsSync(path.join(skillsDir, e.name, 'SKILL.md'))) {
+        fail(`${path.join(dir, 'skills', e.name)}: no SKILL.md`);
+      }
     }
   }
 }

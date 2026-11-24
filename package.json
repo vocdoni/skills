@@ -15,6 +15,7 @@
   ],
   "scripts": {
     "lint": "node bin/install.js list",
+    "test": "node --test test/*.test.js",
     "changeset": "changeset",
     "version-packages": "changeset version && npm install --package-lock-only",
     "release": "node .github/scripts/check-release.mjs && changeset publish"
