@@ -13,7 +13,6 @@ claude plugin install vocdoni-integrator-sdk@vocdoni
 
 # Internal tooling we use at Vocdoni:
 claude plugin install vocdoni-go@vocdoni
-claude plugin install vocdoni-stripe@vocdoni
 claude plugin install vocdoni-internal-oauth@vocdoni
 claude plugin install vocdoni-ui-style@vocdoni
 claude plugin install agentic-dev@vocdoni
@@ -71,14 +70,6 @@ Tooling we use internally for our own development workflow. Nothing stops you fr
 | `go-best-practices`  | Rob Pike's *Go Proverbs* — idiomatic & architectural defaults.            |
 | `go-code-quality`    | Production checklist: domain types, error contracts, context, goroutines. |
 | `go-modern`          | Version-aware modern Go syntax. Reads `go.mod` to pick the right target.  |
-
-### 💳 `vocdoni-stripe` — Stripe operations for the SaaS
-
-| Skill                 | What it covers                                                                                                                                                                                                                          |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stripe-subscription` | Create a subscription for an existing customer through the Stripe CLI (or MCP): prompts for the minimum inputs, clones per-customer *Custom* / *Integrator Starter* plan products, handles discounts and collection, confirms before writing. |
-
-Requires `jq` and either the [Stripe CLI](https://docs.stripe.com/stripe-cli) with a started session (`stripe login`, then `stripe agent setup` for its own skill) or a Stripe MCP server.
 
 ### 🔑 `vocdoni-internal-oauth` — staff sign-in for internal tools
 
@@ -144,7 +135,6 @@ claude plugin install vocdoni-sdk@vocdoni
 claude plugin install davinci-sdk@vocdoni
 claude plugin install vocdoni-integrator-sdk@vocdoni
 claude plugin install vocdoni-go@vocdoni
-claude plugin install vocdoni-stripe@vocdoni
 claude plugin install vocdoni-internal-oauth@vocdoni
 claude plugin install vocdoni-ui-style@vocdoni
 claude plugin install agentic-dev@vocdoni
@@ -228,7 +218,6 @@ claude plugin update vocdoni-sdk@vocdoni
 claude plugin update davinci-sdk@vocdoni
 claude plugin update vocdoni-integrator-sdk@vocdoni
 claude plugin update vocdoni-go@vocdoni
-claude plugin update vocdoni-stripe@vocdoni
 claude plugin update agentic-dev@vocdoni
 claude plugin update vocdoni-comments@vocdoni
 claude plugin update vocdoni-contributing@vocdoni
@@ -272,8 +261,6 @@ Copy the skill directories again over the old ones, or `git pull` if you symlink
 │   ├── vocdoni-sdk/
 │   │   └── …
 │   ├── davinci-sdk/
-│   │   └── …
-│   ├── vocdoni-stripe/
 │   │   └── …
 │   ├── vocdoni-internal-oauth/
 │   │   └── …

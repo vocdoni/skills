@@ -17,16 +17,6 @@
       "homepage": "https://github.com/vocdoni/skills"
     },
     {
-      "name": "vocdoni-stripe",
-      "source": "./plugins/vocdoni-stripe",
-      "description": "Stripe operations for the Vocdoni SaaS: create subscriptions for existing customers with the org-address metadata the backend needs, clone per-customer Custom / Integrator Starter plan products, handle discounts and payment collection, always confirming before writing. Includes an environment-guarding Stripe CLI wrapper and a verified backend contract reference.",
-      "version": "0.1.1",
-      "category": "engineering",
-      "tags": ["vocdoni", "stripe", "billing", "subscriptions", "saas", "stripe-cli"],
-      "license": "AGPL-3.0-or-later",
-      "homepage": "https://github.com/vocdoni/skills"
-    },
-    {
       "name": "vocdoni-internal-oauth",
       "source": "./plugins/vocdoni-internal-oauth",
       "description": "Add @vocdoni.org Google sign-in to an internal tool through the central provider at oauth.vocdoni.org: register the client, wire the Go (vocauth) or Node (@vocdoni/oauth) kit or any OIDC library, migrate away from a shared password, troubleshoot.",
