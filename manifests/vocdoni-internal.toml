@@ -80,10 +80,6 @@ name = "vocdoni-ui-style"
 marketplace = "vocdoni"
 
 [[plugin]]
-name = "vocdoni-stripe"
-marketplace = "vocdoni"
-
-[[plugin]]
 name = "vocdoni-sdk"
 marketplace = "vocdoni"
 
