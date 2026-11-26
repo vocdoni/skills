@@ -70,6 +70,13 @@ function runHook(event, args, env) {
   return context;
 }
 
+// The context the plugin's first hook for an event injects, run with CLAUDE_PLUGIN_ROOT set to the plugin.
+function hookContext(pluginDir, event) {
+  const hook = contextHooks(pluginDir).find((h) => h.event === event);
+  assert.ok(hook, `${event} hook not found`);
+  return runHook(event, ['-c', hook.command], { ...process.env, CLAUDE_PLUGIN_ROOT: pluginDir });
+}
+
 // The SKILL.md body as the hook injects it: CRs removed, frontmatter dropped, leading and trailing blank lines dropped.
 function skillBody(skillFile) {
   const lines = fs.readFileSync(skillFile, 'utf8').replace(/\r/g, '').split('\n');
@@ -160,6 +167,37 @@ describe('plugin session and subagent hooks', { skip: SKIP }, () => {
           delete env.CLAUDE_PLUGIN_ROOT;
           for (const hook of contextHooks(pluginDir).filter((h) => h.event === 'SessionStart')) {
             runHook('SessionStart', [hook.script], env);
+          }
+        });
+
+        test('SubagentStart skips read-only and forked subagents', () => {
+          const config = JSON.parse(fs.readFileSync(path.join(pluginDir, 'hooks', 'hooks.json'), 'utf8'));
+          const [group] = config.hooks.SubagentStart;
+          assert.ok(group.matcher, 'SubagentStart group has no matcher');
+          const pattern = new RegExp(group.matcher);
+          for (const type of ['Explore', 'Plan', 'claude-code-guide', 'statusline-setup', 'fork']) {
+            assert.ok(!pattern.test(type), `SubagentStart matcher matches ${type}`);
+          }
+          for (const type of ['general-purpose', 'worker', 'reviewer', 'vocdoni-internal:worker']) {
+            assert.ok(pattern.test(type), `SubagentStart matcher does not match ${type}`);
+          }
+        });
+      }
+
+      if (plugin === 'vocdoni-contributing') {
+        test('only SubagentStart tells the subagent to leave the issue and PR to the delegating session', () => {
+          const phrase = 'belong to the session that delegated to you';
+          assert.ok(hookContext(pluginDir, 'SubagentStart').includes(phrase), 'SubagentStart lacks the delegation note');
+          assert.ok(!hookContext(pluginDir, 'SessionStart').includes(phrase), 'SessionStart has the delegation note');
+        });
+      }
+
+      if (plugin === 'vocdoni-comments') {
+        test('points at the installed trim.md for both events', () => {
+          const trim = path.join(pluginDir, 'skills', 'comments', 'trim.md');
+          assert.ok(fs.existsSync(trim), `missing ${trim}`);
+          for (const event of CONTEXT_EVENTS) {
+            assert.ok(hookContext(pluginDir, event).includes(`read ${trim}`), `${event}: no trim.md path`);
           }
         });
       }

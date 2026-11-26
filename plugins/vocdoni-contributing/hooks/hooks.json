@@ -1,5 +1,5 @@
 {
-  "description": "Injects the vocdoni-contributing rules (issue tracking, stacked PRs for epics, PR/MR descriptions, issues, reviews, review threads, commits) into every session and subagent by reading the skill body from SKILL.md",
+  "description": "Injects the vocdoni-contributing rules (issue tracking, stacked PRs for epics, PR/MR descriptions, issues, reviews, review threads, commits) into every session and into every subagent except read-only and forked ones, by reading the skill body from SKILL.md",
   "hooks": {
     "SessionStart": [
       {
@@ -14,6 +14,7 @@
     ],
     "SubagentStart": [
       {
+        "matcher": "^(?!(Explore|Plan|claude-code-guide|statusline-setup|fork)$)",
         "hooks": [
           {
             "type": "command",

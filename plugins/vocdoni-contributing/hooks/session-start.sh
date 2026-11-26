@@ -35,9 +35,15 @@ json_escape() {
   printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e "s/$tab/\\\\t/g" | awk '{ printf "%s%s", (NR > 1 ? "\\n" : ""), $0 }'
 }
 
-msg="The vocdoni-contributing plugin is installed. Follow these rules whenever you start a change in a repository or write or post to the git host, even as one step of a larger task:
+if [ "$event" = SubagentStart ]; then
+  msg="The vocdoni-contributing plugin is installed. Follow these rules for every commit message and anything you write to the git host. Finding or opening the tracking issue and opening the PR belong to the session that delegated to you: skip those steps unless your task asks for them.
 
 $body"
+else
+  msg="The vocdoni-contributing plugin is installed. Follow these rules whenever you start a change in a repository or write or post to the git host, even as one step of a larger task:
+
+$body"
+fi
 
 printf '{"hookSpecificOutput":{"hookEventName":"%s","additionalContext":"%s"}}\n' "$event" "$(json_escape "$msg")"
 exit 0

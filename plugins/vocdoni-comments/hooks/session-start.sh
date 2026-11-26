@@ -24,6 +24,7 @@ for root in "${CLAUDE_PLUGIN_ROOT:-}" "$script_dir/.."; do
   fi
 done
 [ -n "$skill" ] || exit 0
+trim="$(dirname "$skill")/trim.md"
 
 # Drop control characters other than tab and newline, which json_escape would leave raw, then the
 # frontmatter block (first line "---" up to the next "---"), then leading blank lines.
@@ -36,7 +37,7 @@ json_escape() {
   printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e "s/$tab/\\\\t/g" | awk '{ printf "%s%s", (NR > 1 ? "\\n" : ""), $0 }'
 }
 
-msg="The vocdoni-comments plugin is installed. Follow these rules whenever you write or change a code comment, even as one step of a larger task. trim.md is not included here: before trimming or reviewing comments, load the comments skill (Skill tool, vocdoni-comments:comments).
+msg="The vocdoni-comments plugin is installed. Follow these rules whenever you write or change a code comment, even as one step of a larger task. trim.md is not included here: before trimming or reviewing comments, load the comments skill (Skill tool, vocdoni-comments:comments), or read $trim if you have no Skill tool.
 
 $body"
 
