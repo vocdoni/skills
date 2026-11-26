@@ -107,7 +107,7 @@ The plugin also installs a **SessionStart hook** that injects the `comments` bod
 
 The plugin also installs a **SessionStart hook** that injects the same `contributing` body into every Claude Code session, so the rules hold even when a PR is one step of a larger task and the skill's description never matches. The hook reads `skills/contributing/SKILL.md` directly, so the skill is the only place to edit. The hook is Claude Code-only; an npx install gets the skill, which still triggers from its description.
 
-The plugin declares `vocdoni-comments` as a dependency, so installing or updating `vocdoni-contributing` in Claude Code also installs and enables `vocdoni-comments`. An npx install does not follow dependencies.
+The plugin declares `vocdoni-comments` as a dependency: installing `vocdoni-contributing` in Claude Code also installs and enables `vocdoni-comments` at the same scope, and `vocdoni-comments` cannot be disabled while `vocdoni-contributing` is enabled. Updating from a version before 0.5.0 installs it too (Claude Code 2.1.319 or later), but does not re-enable a `vocdoni-comments` you had disabled: `vocdoni-contributing` then fails to load until you run `claude plugin enable vocdoni-comments@vocdoni`, or `claude plugin install vocdoni-comments@vocdoni` if the update could not fetch it. An npx install does not follow dependencies.
 
 ### 🤖 `pi-subagent` — delegate to Pi subagents
 
