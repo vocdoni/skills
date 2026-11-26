@@ -9,8 +9,8 @@
     {
       "name": "vocdoni-go",
       "source": "./plugins/vocdoni-go",
-      "description": "Go skills: Rob Pike's proverbs, production-grade quality checklist (with deep reference), and version-aware modern Go syntax.",
-      "version": "0.1.0",
+      "description": "Go skills: Rob Pike's proverbs, production-grade quality checklist (with deep reference), version-aware modern Go syntax, and an iterative six-reviewer branch review for Vocdoni backends.",
+      "version": "0.2.0",
       "category": "engineering",
       "tags": ["go", "golang", "best-practices", "code-quality"],
       "license": "AGPL-3.0-or-later",

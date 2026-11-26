@@ -70,6 +70,7 @@ Tooling we use internally for our own development workflow. Nothing stops you fr
 | `go-best-practices`  | Rob Pike's *Go Proverbs* — idiomatic & architectural defaults.            |
 | `go-code-quality`    | Production checklist: domain types, error contracts, context, goroutines. |
 | `go-modern`          | Version-aware modern Go syntax. Reads `go.mod` to pick the right target.  |
+| `vocdoni-backend-review` | Invoked with `/vocdoni-go:vocdoni-backend-review [base-ref]`: six independent reviewers (usage, design, implementation, style, testing, docs) review the branch, a planner and an implementer fix what they find, and the loop repeats until all six are clean. Needs `agentic-dev`, `vocdoni-comments` and `vocdoni-contributing`. |
 
 ### 🔑 `vocdoni-internal-oauth` — staff sign-in for internal tools
 
