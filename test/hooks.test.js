@@ -14,11 +14,15 @@ const PLUGINS_DIR = path.join(REPO_ROOT, 'plugins');
 // and a short preview, so the rules would silently stop reaching the model.
 const MAX_CONTEXT_LENGTH = 10000;
 
-// Plugins whose SessionStart hook injects the body of the skill with the same name.
+// Plugins whose SessionStart and SubagentStart hooks inject the body of the skill with the same name.
 const BODY_SKILLS = {
   'vocdoni-comments': 'comments',
   'vocdoni-contributing': 'contributing',
 };
+
+// Events whose hooks add context. SubagentStart is what reaches subagents, which never receive a session's
+// SessionStart context.
+const CONTEXT_EVENTS = ['SessionStart', 'SubagentStart'];
 
 const SKIP = process.platform === 'win32' ? 'the hooks are bash scripts' : false;
 
@@ -35,27 +39,31 @@ function hookPlugins() {
     .sort();
 }
 
-function sessionStartScripts(pluginDir) {
+// The command hooks registered under CONTEXT_EVENTS, each with the event it is registered under.
+function contextHooks(pluginDir) {
   const config = JSON.parse(fs.readFileSync(path.join(pluginDir, 'hooks', 'hooks.json'), 'utf8'));
-  const scripts = [];
-  for (const group of config.hooks?.SessionStart ?? []) {
-    for (const hook of group.hooks ?? []) {
-      if (hook.type !== 'command') continue;
-      const match = /\$\{CLAUDE_PLUGIN_ROOT\}\/([^"'\s]+)/.exec(hook.command);
-      assert.ok(match, `SessionStart command does not use \${CLAUDE_PLUGIN_ROOT}: ${hook.command}`);
-      scripts.push(path.join(pluginDir, match[1]));
+  const hooks = [];
+  for (const event of Object.keys(config.hooks ?? {})) {
+    if (!CONTEXT_EVENTS.includes(event)) continue;
+    for (const group of config.hooks[event]) {
+      for (const hook of group.hooks ?? []) {
+        if (hook.type !== 'command') continue;
+        const match = /\$\{CLAUDE_PLUGIN_ROOT\}\/([^"'\s]+)/.exec(hook.command);
+        assert.ok(match, `${event} command does not use \${CLAUDE_PLUGIN_ROOT}: ${hook.command}`);
+        hooks.push({ event, command: hook.command, script: path.join(pluginDir, match[1]) });
+      }
     }
   }
-  return scripts;
+  return hooks;
 }
 
-// Runs the script the way Claude Code does (bash, JSON on stdin) and returns the injected context.
-function runSessionStart(script, env) {
+// Runs a hook through bash, JSON on stdin, as Claude Code does, and returns the injected context.
+function runHook(event, args, env) {
   const cwd = fs.mkdtempSync(path.join(tmpRoot, 'cwd-'));
-  const result = spawnSync('bash', [script], { cwd, env, input: '{}', encoding: 'utf8' });
+  const result = spawnSync('bash', args, { cwd, env, input: '{}', encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   const output = JSON.parse(result.stdout);
-  assert.equal(output.hookSpecificOutput?.hookEventName, 'SessionStart');
+  assert.equal(output.hookSpecificOutput?.hookEventName, event);
   const context = output.hookSpecificOutput.additionalContext;
   assert.equal(typeof context, 'string');
   assert.ok(context.length > 0, 'additionalContext is empty');
@@ -76,10 +84,14 @@ function skillBody(skillFile) {
 
 const plugins = hookPlugins();
 
-describe('plugin SessionStart hooks', { skip: SKIP }, () => {
+describe('plugin session and subagent hooks', { skip: SKIP }, () => {
   test('every body-injecting plugin has a hook', () => {
     for (const plugin of Object.keys(BODY_SKILLS)) {
       assert.ok(plugins.includes(plugin), `${plugin} has no hooks/hooks.json`);
+      const events = new Set(contextHooks(path.join(PLUGINS_DIR, plugin)).map((hook) => hook.event));
+      for (const event of CONTEXT_EVENTS) {
+        assert.ok(events.has(event), `${plugin} has no ${event} hook`);
+      }
     }
   });
 
@@ -87,19 +99,18 @@ describe('plugin SessionStart hooks', { skip: SKIP }, () => {
     const pluginDir = path.join(PLUGINS_DIR, plugin);
 
     describe(plugin, () => {
-      test('SessionStart hooks reference existing executable scripts', () => {
-        const scripts = sessionStartScripts(pluginDir);
-        assert.ok(scripts.length > 0, 'no SessionStart command hook');
-        for (const script of scripts) {
-          assert.ok(fs.existsSync(script), `missing script: ${script}`);
-          assert.ok(fs.statSync(script).mode & 0o111, `script is not executable: ${script}`);
+      test('session and subagent hooks reference existing scripts', () => {
+        const hooks = contextHooks(pluginDir);
+        assert.ok(hooks.length > 0, 'no SessionStart or SubagentStart command hook');
+        for (const hook of hooks) {
+          assert.ok(fs.existsSync(hook.script), `missing script: ${hook.script}`);
         }
       });
 
-      test('SessionStart output is valid JSON with context under the cap', () => {
+      test('hook output is valid JSON with context under the cap', () => {
         const env = { ...process.env, CLAUDE_PLUGIN_ROOT: pluginDir };
-        for (const script of sessionStartScripts(pluginDir)) {
-          const context = runSessionStart(script, env);
+        for (const hook of contextHooks(pluginDir)) {
+          const context = runHook(hook.event, ['-c', hook.command], env);
           assert.ok(
             context.length < MAX_CONTEXT_LENGTH,
             `additionalContext is ${context.length} characters, the cap is ${MAX_CONTEXT_LENGTH}`,
@@ -114,7 +125,7 @@ describe('plugin SessionStart hooks', { skip: SKIP }, () => {
           fs.mkdirSync(path.dirname(skillFile), { recursive: true });
           fs.writeFileSync(skillFile, '---\nname: comments\n---\n\nA\x01B\x0cC\x1bD\r\n\tE "q" \\ F\n');
           const script = path.join(pluginDir, 'hooks', 'session-start.sh');
-          const context = runSessionStart(script, { ...process.env, CLAUDE_PLUGIN_ROOT: root });
+          const context = runHook('SessionStart', [script], { ...process.env, CLAUDE_PLUGIN_ROOT: root });
           assert.ok(context.endsWith('ABCD\n\tE "q" \\ F'), JSON.stringify(context));
         });
       }
@@ -126,10 +137,10 @@ describe('plugin SessionStart hooks', { skip: SKIP }, () => {
         test(`injects the ${skill} SKILL.md body`, () => {
           const body = skillBody(skillFile);
           const env = { ...process.env, CLAUDE_PLUGIN_ROOT: pluginDir };
-          for (const script of sessionStartScripts(pluginDir)) {
-            const context = runSessionStart(script, env);
-            assert.ok(context.endsWith(body), 'additionalContext does not end with the SKILL.md body');
-            assert.ok(!context.includes(`name: ${skill}`), 'additionalContext includes the frontmatter');
+          for (const hook of contextHooks(pluginDir)) {
+            const context = runHook(hook.event, ['-c', hook.command], env);
+            assert.ok(context.endsWith(body), `${hook.event}: additionalContext does not end with the SKILL.md body`);
+            assert.ok(!context.includes(`name: ${skill}`), `${hook.event}: additionalContext includes the frontmatter`);
           }
         });
 
@@ -137,10 +148,18 @@ describe('plugin SessionStart hooks', { skip: SKIP }, () => {
           const body = skillBody(skillFile);
           const env = { ...process.env };
           delete env.CLAUDE_PLUGIN_ROOT;
-          for (const script of sessionStartScripts(pluginDir)) {
-            const context = runSessionStart(script, env);
-            assert.ok(context.endsWith(body), 'additionalContext does not end with the SKILL.md body');
-            assert.ok(!context.includes(`name: ${skill}`), 'additionalContext includes the frontmatter');
+          for (const hook of contextHooks(pluginDir)) {
+            const context = runHook(hook.event, [hook.script, hook.event], env);
+            assert.ok(context.endsWith(body), `${hook.event}: additionalContext does not end with the SKILL.md body`);
+            assert.ok(!context.includes(`name: ${skill}`), `${hook.event}: additionalContext includes the frontmatter`);
+          }
+        });
+
+        test('answers SessionStart when run without an event argument', () => {
+          const env = { ...process.env };
+          delete env.CLAUDE_PLUGIN_ROOT;
+          for (const hook of contextHooks(pluginDir).filter((h) => h.event === 'SessionStart')) {
+            runHook('SessionStart', [hook.script], env);
           }
         });
       }

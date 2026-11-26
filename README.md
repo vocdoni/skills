@@ -97,7 +97,7 @@ The plugin also installs a **SessionStart hook** so the model loads the skill on
 | ---------- | -------------- |
 | `comments` | How to write code comments (doc, inline, JSDoc): 1-3 lines per block that say the why or a constraint the code can't show, without restating code, narrating history or repeating documented flows, and with claims that match the code. `trim.md` shortens existing comments, either the blocks a branch added (`/comments trim`) or every long block in a project or folder (`/comments trim project [path]`; a plugin install namespaces them as `/vocdoni-comments:comments trim`), keeping anything only the comment said and reporting where each dropped piece lives. |
 
-The plugin also installs a **SessionStart hook** that injects the `comments` body into every Claude Code session, so the rules hold when comments are written as one step of a coding task and the skill's description never matches. The hook reads `skills/comments/SKILL.md` directly, so the skill is the only place to edit. `trim.md` still loads with the skill. The hook is Claude Code-only; an npx install gets the skill, which still triggers from its description.
+The plugin also installs **SessionStart and SubagentStart hooks** that inject the `comments` body into every Claude Code session and every subagent it starts. Subagents do not receive a session's SessionStart context, so without the second hook a delegated worker never sees the rules. The rules hold when comments are written as one step of a coding task and the skill's description never matches. The hook reads `skills/comments/SKILL.md` directly, so the skill is the only place to edit. `trim.md` still loads with the skill. The hook is Claude Code-only; an npx install gets the skill, which still triggers from its description.
 
 ### 📝 `vocdoni-contributing` — what the agent posts on the git host
 
@@ -105,7 +105,7 @@ The plugin also installs a **SessionStart hook** that injects the `comments` bod
 | -------------- | -------------- |
 | `contributing` | The rules for everything the agent writes on GitHub or GitLab: an opening line naming the model and the user it acts for, no `Co-authored-by` trailer, every PR linked to an issue (found, or opened before the PR), an epic's PRs stacked on each other with `gh stack` and merged in one go, length limits and structure for PR/MR descriptions and issues, findings of about three sentences in reviews (nits marked "Nit:"), review threads it addresses answered and resolved, and reviews posted as reviews marked "Approve" or "Request changes". |
 
-The plugin also installs a **SessionStart hook** that injects the same `contributing` body into every Claude Code session, so the rules hold even when a PR is one step of a larger task and the skill's description never matches. The hook reads `skills/contributing/SKILL.md` directly, so the skill is the only place to edit. The hook is Claude Code-only; an npx install gets the skill, which still triggers from its description.
+The plugin also installs **SessionStart and SubagentStart hooks** that inject the same `contributing` body into every Claude Code session and every subagent it starts. Subagents do not receive a session's SessionStart context, so without the second hook a delegated worker never sees the rules. The rules hold even when a PR is one step of a larger task and the skill's description never matches. The hook reads `skills/contributing/SKILL.md` directly, so the skill is the only place to edit. The hook is Claude Code-only; an npx install gets the skill, which still triggers from its description.
 
 The plugin declares `vocdoni-comments` as a dependency: installing `vocdoni-contributing` in Claude Code also installs and enables `vocdoni-comments` at the same scope, and `vocdoni-comments` cannot be disabled while `vocdoni-contributing` is enabled. Updating from a version before 0.5.0 installs it too (Claude Code 2.1.319 or later), but does not re-enable a `vocdoni-comments` you had disabled: `vocdoni-contributing` then fails to load until you run `claude plugin enable vocdoni-comments@vocdoni`, or `claude plugin install vocdoni-comments@vocdoni` if the update could not fetch it. An npx install does not follow dependencies.
 
@@ -289,9 +289,9 @@ Copy the skill directories again over the old ones, or `git pull` if you symlink
 │   │   └── …
 │   ├── agentic-dev/                    # skill + SessionStart hook (hooks/)
 │   │   └── …
-│   ├── vocdoni-comments/               # skill + SessionStart hook (hooks/)
+│   ├── vocdoni-comments/               # skill + session/subagent hooks (hooks/)
 │   │   └── …
-│   ├── vocdoni-contributing/           # skill + SessionStart hook (hooks/)
+│   ├── vocdoni-contributing/           # skill + session/subagent hooks (hooks/)
 │   │   └── …
 │   └── claude-pi-subagent/             # nested marketplace (pi-agent-tools)
 │       └── plugins/pi-subagent/        # MCP server plugin + agents — see its README

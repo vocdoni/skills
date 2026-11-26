@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
-# SessionStart hook for the vocdoni-contributing plugin.
+# SessionStart and SubagentStart hook for vocdoni-contributing.
 #
-# Injects the contributing skill body (SKILL.md without its YAML frontmatter) into every session, so the
-# rules for tracking work in an issue, PR/MR descriptions, issues, reviews and commits apply even when they
-# are one step of a larger task and the skill's description never matches. Reads the body from SKILL.md so there is one source of truth.
+# Injects the contributing skill body (SKILL.md, frontmatter dropped) into every session and subagent, so
+# rules for tracking work in an issue, PR/MR descriptions, issues, reviews and commits apply even as one step
+# of a task and the skill's description never matches. Reads the body from SKILL.md so there is one source of truth.
 #
 # Prints hookSpecificOutput JSON on stdout. Reads no input, writes nothing on error, never blocks, always exits 0.
 # Plain bash 3.2 so it runs on stock macOS.
+
+# Claude Code runs this for SessionStart and SubagentStart; the output must name the event it answers.
+case "${1:-}" in
+  SubagentStart) event=SubagentStart ;;
+  *) event=SessionStart ;;
+esac
 
 script_dir=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
 
@@ -33,5 +39,5 @@ msg="The vocdoni-contributing plugin is installed. Follow these rules whenever y
 
 $body"
 
-printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}\n' "$(json_escape "$msg")"
+printf '{"hookSpecificOutput":{"hookEventName":"%s","additionalContext":"%s"}}\n' "$event" "$(json_escape "$msg")"
 exit 0

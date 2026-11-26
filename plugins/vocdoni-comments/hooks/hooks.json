@@ -1,12 +1,23 @@
 {
-  "description": "Injects the vocdoni-comments rules for writing code comments into every session by reading the skill body from SKILL.md",
+  "description": "Injects the vocdoni-comments rules for writing code comments into every session and subagent by reading the skill body from SKILL.md",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\" SessionStart",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\" SubagentStart",
             "timeout": 10
           }
         ]
