@@ -1,7 +1,7 @@
 {
   "name": "vocdoni-go",
-  "version": "0.1.0",
-  "description": "Vocdoni's Go skills: Rob Pike's proverbs, a production-grade quality checklist with a deep reference, and version-aware modern Go syntax.",
+  "version": "0.2.0",
+  "description": "Vocdoni's Go skills: Rob Pike's proverbs, a production-grade quality checklist with a deep reference, version-aware modern Go syntax, and an iterative multi-agent review of a Vocdoni Go backend branch.",
   "author": {
     "name": "Vocdoni",
     "url": "https://vocdoni.io"
