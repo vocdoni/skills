@@ -19,8 +19,9 @@ for root in "${CLAUDE_PLUGIN_ROOT:-}" "$script_dir/.."; do
 done
 [ -n "$skill" ] || exit 0
 
-# Drop the frontmatter block (first line "---" up to the next "---"), then leading blank lines.
-body=$(tr -d '\r' < "$skill" 2>/dev/null | awk 'NR == 1 && /^---$/ { fm = 1; next } fm && /^---$/ { fm = 0; next } !fm' | sed '/./,$!d')
+# Drop control characters other than tab and newline, which json_escape would leave raw, then the
+# frontmatter block (first line "---" up to the next "---"), then leading blank lines.
+body=$(tr -d '\000-\010\013-\037' < "$skill" 2>/dev/null | awk 'NR == 1 && /^---$/ { fm = 1; next } fm && /^---$/ { fm = 0; next } !fm' | sed '/./,$!d')
 [ -n "$body" ] || exit 0
 
 tab=$(printf '\t')

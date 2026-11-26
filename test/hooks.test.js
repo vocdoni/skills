@@ -107,6 +107,18 @@ describe('plugin SessionStart hooks', { skip: SKIP }, () => {
         }
       });
 
+      if (plugin === 'vocdoni-comments') {
+        test('drops control characters that would break the JSON', () => {
+          const root = fs.mkdtempSync(path.join(tmpRoot, 'root-'));
+          const skillFile = path.join(root, 'skills', 'comments', 'SKILL.md');
+          fs.mkdirSync(path.dirname(skillFile), { recursive: true });
+          fs.writeFileSync(skillFile, '---\nname: comments\n---\n\nA\x01B\x0cC\x1bD\r\n\tE "q" \\ F\n');
+          const script = path.join(pluginDir, 'hooks', 'session-start.sh');
+          const context = runSessionStart(script, { ...process.env, CLAUDE_PLUGIN_ROOT: root });
+          assert.ok(context.endsWith('ABCD\n\tE "q" \\ F'), JSON.stringify(context));
+        });
+      }
+
       if (BODY_SKILLS[plugin]) {
         const skill = BODY_SKILLS[plugin];
         const skillFile = path.join(pluginDir, 'skills', skill, 'SKILL.md');

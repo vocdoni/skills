@@ -172,7 +172,7 @@ claude plugin install vocdoni-comments@vocdoni --scope project
 claude plugin install vocdoni-contributing@vocdoni --scope project
 ```
 
-Use `--scope user` instead to cover every project on the machine. Until then the `/plugin` **Errors** tab reports each one as enabled but not installed, and neither its skill nor its hook loads.
+Use `--scope user` instead to cover every project on the machine. Until a plugin is installed it does not load at session start, so neither its skill nor its hook is there: `/reload-plugins` loads it for the current session only, and the `/plugin` **Errors** tab can list it as enabled but not installed.
 
 ### npx (any client that reads a skills directory)
 
