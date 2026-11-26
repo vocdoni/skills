@@ -1,0 +1,16 @@
+{
+  "description": "Injects the vocdoni-comments rules for writing code comments into every session by reading the skill body from SKILL.md",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

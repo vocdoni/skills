@@ -49,8 +49,8 @@
     {
       "name": "vocdoni-comments",
       "source": "./plugins/vocdoni-comments",
-      "description": "Code comment rules: 1-3 lines that carry the why, plus a trim procedure for a branch or a whole project that keeps every constraint only a comment states.",
-      "version": "0.1.0",
+      "description": "Code comment rules: 1-3 lines that carry the why, plus a trim procedure for a branch or a whole project that keeps every constraint only a comment states. A SessionStart hook applies the writing rules in every session.",
+      "version": "0.2.0",
       "category": "engineering",
       "tags": ["comments", "code-comments", "code-quality", "code-review", "documentation"],
       "license": "AGPL-3.0-or-later",
