@@ -1,5 +1,15 @@
 # @vocdoni/skills
 
+## 0.6.0
+
+### Minor Changes
+
+- [#60](https://github.com/vocdoni/skills/pull/60) [`751b1cb`](https://github.com/vocdoni/skills/commit/751b1cb08d637566a7d6c184277cf1ba151781ef) Thanks [@elboletaire](https://github.com/elboletaire)! - Removes the `vocdoni-stripe` plugin and its `stripe-subscription` skill. saas-backend has retired subscription plans in favour of pay-per-process wallet billing, and with only a couple of developers touching Stripe, a shared skill is not worth maintaining. If you installed skills with `npx @vocdoni/skills`, remove the old copy with `npx @vocdoni/skills uninstall stripe-subscription`; installing never removes a skill. Claude Code users can run `claude plugin uninstall vocdoni-stripe@vocdoni`.
+
+### Patch Changes
+
+- [#76](https://github.com/vocdoni/skills/pull/76) [`3c95065`](https://github.com/vocdoni/skills/commit/3c95065ad5f2cb7b4fe8baa6e7e3de6e8708286d) Thanks [@elboletaire](https://github.com/elboletaire)! - vocdoni-comments 0.2.0 adds a SessionStart hook that injects the comment-writing rules into every Claude Code session, so they apply when comments are written as one step of a coding task. The README now says that plugins enabled through a repo's `.claude/settings.json` still have to be installed by each contributor. vocdoni-contributing 0.5.0 declares vocdoni-comments as a dependency, so Claude Code installs both together. Both plugins also register the hook for SubagentStart, so the rules reach subagents, which never receive a session's SessionStart context.
+
 ## 0.5.3
 
 ### Patch Changes
