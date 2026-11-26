@@ -49,8 +49,8 @@
     {
       "name": "vocdoni-comments",
       "source": "./plugins/vocdoni-comments",
-      "description": "Code comment rules: 1-3 lines that carry the why, plus a trim procedure for a branch or a whole project that keeps every constraint only a comment states.",
-      "version": "0.1.0",
+      "description": "Code comment rules: 1-3 lines that carry the why, plus a trim procedure for a branch or a whole project that keeps every constraint only a comment states. Hooks apply the writing rules in every session and subagent.",
+      "version": "0.2.0",
       "category": "engineering",
       "tags": ["comments", "code-comments", "code-quality", "code-review", "documentation"],
       "license": "AGPL-3.0-or-later",
@@ -59,8 +59,8 @@
     {
       "name": "vocdoni-contributing",
       "source": "./plugins/vocdoni-contributing",
-      "description": "Rules for what the agent posts on the git host: self-introduction, issue tracking, stacked PRs for epics, length and structure for PR/MR descriptions, issues and reviews, posting reviews as reviews, and resolving the review threads it addresses. A SessionStart hook applies them in every session, even as one step of a larger task.",
-      "version": "0.4.0",
+      "description": "Rules for what the agent posts on the git host: self-introduction, issue tracking, stacked PRs for epics, length and structure for PR/MR descriptions, issues and reviews, posting reviews as reviews, and resolving the review threads it addresses. Hooks apply them in every session and subagent, even as one step of a larger task.",
+      "version": "0.5.0",
       "category": "engineering",
       "tags": ["vocdoni", "pull-request", "merge-request", "code-review", "issues", "commits", "git-host"],
       "license": "AGPL-3.0-or-later",
