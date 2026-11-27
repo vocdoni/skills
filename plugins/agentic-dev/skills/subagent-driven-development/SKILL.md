@@ -89,7 +89,13 @@ go. Phases marked † are skipped for Bounded work.
 
 **1. Explore and brainstorm.** Map the code read-only first, using Explore agents that return
 `file:line` maps. An Explore map tells you *where* code is, not *what* it does; read the code
-that matters yourself. Then work out the design with the owner. Ask one question at a time with
+that matters yourself. Then work out the design with the owner. Before you propose it, compare
+the design and the existing code it builds on against well-known implementations of the same
+problem (mature open-source projects, standards, published designs), and bring what they handle
+that yours doesn't. Survey widely and report the sources that disagree with your draft, not
+only the ones that confirm it. Where the current code falls short of them, be bold: offer to
+widen the scope and align it now, or to track it in a separate issue, and let the owner choose;
+re-size the work if the scope grows. Ask one question at a time with
 AskUserQuestion, as multiple choice with your recommended option first. Show numbers (sizes,
 latencies, costs, line counts) before asking the owner to choose. Resolve the model roles with
 [references/models.md](references/models.md); once the workspace exists, write them on the
