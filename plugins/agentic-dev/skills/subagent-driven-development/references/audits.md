@@ -71,7 +71,8 @@ Check:
    and writers, rollout order, rollback.
 4. Failure modes: untrusted input, partial failure, concurrency, restarts, resource limits.
 5. Security: secrets, auth, trust boundaries, replay, injection.
-6. Anything simpler that meets the same goals.
+6. Anything simpler that meets the same goals, and anything well-known implementations of the
+   same problem handle that this design misses.
 7. Missing decisions an implementer would have to guess.
 
 Write the report to <workspace>/audit-spec.md:
